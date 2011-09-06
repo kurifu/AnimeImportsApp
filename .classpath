@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/activation.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-base-1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-calendar-2.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-calendar-meta-2.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-client-1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-client-meta-1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-core-1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-docs-3.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-docs-meta-3.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/gdata-media-1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/guava-r09.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/javamail1_4_4.zip"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/servlet-api.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/google-collect-1.0-rc1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
