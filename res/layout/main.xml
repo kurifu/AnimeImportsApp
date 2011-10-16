@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/hello"
-    />
+    android:layout_height="fill_parent" 
+    android:orientation="vertical">
+    
+    <TextView android:textAppearance="?android:attr/textAppearanceLarge" 
+    	android:id="@+id/textView1" 
+    	android:text="@string/main_header" 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:gravity="center_horizontal" 
+    	android:layout_marginBottom="20dip" 
+    	android:layout_gravity="center_horizontal"></TextView>
+    
+    <ListView android:id="@id/android:list"
+    	android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="1"
+		android:drawSelectorOnTop="false" android:layout_gravity="center_horizontal">
+	
+		
+		
+	</ListView>
+
 </LinearLayout>
