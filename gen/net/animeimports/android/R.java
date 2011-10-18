@@ -12,13 +12,24 @@ public final class R {
     }
     public static final class drawable {
         public static final int icon=0x7f020000;
+        public static final int icon_edh_common=0x7f020001;
+        public static final int icon_edh_mythic=0x7f020002;
+        public static final int icon_edh_rare=0x7f020003;
+        public static final int icon_edh_uncommon=0x7f020004;
+        public static final int icon_isd_common=0x7f020005;
+        public static final int icon_isd_mythic=0x7f020006;
+        public static final int icon_isd_rare=0x7f020007;
+        public static final int icon_isd_uncommon=0x7f020008;
+        public static final int icon_mtg1=0x7f020009;
+        public static final int icon_mtg2=0x7f02000a;
     }
     public static final class id {
-        public static final int bottomtext=0x7f050004;
-        public static final int icon=0x7f050002;
+        public static final int bottomtext=0x7f050005;
+        public static final int icon=0x7f050003;
         public static final int textView1=0x7f050000;
-        public static final int textView2=0x7f050001;
-        public static final int toptext=0x7f050003;
+        public static final int textView2=0x7f050002;
+        public static final int textViewBack=0x7f050001;
+        public static final int toptext=0x7f050004;
     }
     public static final class layout {
         public static final int event=0x7f030000;

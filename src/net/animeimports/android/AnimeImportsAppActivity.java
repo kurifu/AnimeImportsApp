@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -47,6 +48,7 @@ import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.app.ListActivity;
@@ -54,6 +56,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import net.animeimports.android.AIEventEntry;
+import net.animeimports.android.AIEventEntry.EVENT_TYPE;
+import net.animeimports.android.AIEventEntry.MTG_FORMAT;
 
 public class AnimeImportsAppActivity extends ListActivity {
 	private ArrayList<AIEventEntry> events = Lists.newArrayList();
@@ -94,6 +98,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private List<String> options_links = Lists.newArrayList();
 	private final List<CalendarEntry> calendars = Lists.newArrayList();
 	private AIEventAdapter aiEventAdapter;
+	private static final int DAYS_IN_FUTURE = 14;
 	
 	public class CalendarAndroidRequestInitializer extends CalendarRequestInitializer {
 		String authToken;
@@ -377,7 +382,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     	List<CalendarEntry> calendars = this.calendars;
     	calendars.clear();
     	events.clear();
-    	try {
+    	
+    	/*try {
     		CalendarUrl url = forAllCalendarsFeed();
     		// page through results?
     		while(true) {
@@ -405,41 +411,62 @@ public class AnimeImportsAppActivity extends ListActivity {
 
     		calendarNames = new String[] {e.getMessage()};
     		calendars.clear();
-    	}
+    	}*/
     	// Setting up UI
 
     	try {
-    		if(calendars.size() > 1) {
-    			Log.i("DEBUG", "More than one calendar, doing something bad...?");
-    		}
+    		//CalendarUrl url = new CalendarUrl(calendars.get(0).getEventFeedLink());
+    		Calendar now = Calendar.getInstance();
     		
-    		CalendarUrl url = new CalendarUrl(calendars.get(0).getEventFeedLink());
-        	//url = new CalendarUrl("https://www.google.com/calendar/feeds/animeimports@gmail.com/public/full");
+    		Date startDate = new Date();
+    		startDate.setYear(now.get(Calendar.YEAR)-1900);
+    		startDate.setMonth(now.get(Calendar.MONTH)-8);
+    		startDate.setDate(now.get(Calendar.DATE)-18);
+    		startDate.setHours(now.get(Calendar.HOUR));
+    		startDate.setMinutes(now.get(Calendar.MINUTE));
+    		startDate.setSeconds(now.get(Calendar.SECOND));
     		
+    		Date endDate = new Date();
+    		endDate.setYear(startDate.getYear());
+    		endDate.setMonth(startDate.getMonth());
+    		endDate.setDate(startDate.getDate() + DAYS_IN_FUTURE);
+    		endDate.setHours(startDate.getHours());
+    		endDate.setMinutes(startDate.getMinutes());
+    		endDate.setSeconds(startDate.getSeconds());
+
+    		CustomCalendarURL customUrl = CustomCalendarURL.getUrl();
+    		customUrl.startMin = new DateTime(startDate);
+    		customUrl.startMax = new DateTime(endDate);
+   
+        	CalendarUrl url = new CalendarUrl(customUrl.build());
+        	System.out.println("CHECK: " + url.toString());
     		EventFeed feed = client.eventFeed().list().execute(url);
+
     		for(EventEntry entry : feed.getEntries()) {
     			AIEventEntry e = new AIEventEntry();
-    			
-    			System.out.println("\t* Event:" + entry.title);
-    			System.out.println("\t\t Summary:" + entry.summary);
-    			
-    			if(entry.when == null) {
-    				Log.i("ERROR", "* entry.when is null");
-    				e.setDate("Unknown");
-    				e.setTime("Unknown");
-    				System.out.println("\t\t When: Unknown");
+    			System.out.println("* Event:" + entry.title);
+    			if(entry.title.toUpperCase().contains("MTG")) {
+    				e.setEventType(EVENT_TYPE.MTG);
+    				if(entry.title.toUpperCase().contains("DRAFT")) {
+    					e.setMtgFormat(MTG_FORMAT.DRAFT);
+    				}
     			}
-    			else {
-    				e.setDate(entry.when.startTime.toStringRfc3339().substring(0, 10));
-        			e.setTime(entry.when.startTime.toString().substring(11, 19));
-        			System.out.println("\t\t When: " + entry.when.startTime);
+    			else if(entry.title.contains("Warhammer")) {
+    				e.setEventType(EVENT_TYPE.WARHAMMER);
     			}
     			
+    			if(entry.when != null) {
+    				if(entry.when.startTime != null) {
+	    				e.setDate(entry.when.startTime.toString().substring(0, 10));
+	        			e.setTime(entry.when.startTime.toString().substring(11, 19));
+	        			System.out.println("When: " + entry.when.startTime);
+    				}
+    			}
+    			System.out.println("Summary:" + entry.summary);
+    			System.out.println("\n");
     			e.setName(entry.title);
     			events.add(e);
     		}
-    		
-    		//setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, feed));
     	}
     	catch(IOException e) {
     		e.printStackTrace();
@@ -447,10 +474,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     	
     	this.aiEventAdapter = new AIEventAdapter(this, R.layout.row, events);
         setListAdapter(this.aiEventAdapter);
-        
-    	//setListAdapter(new ArrayAdapter<AIEventEntry>(this, R.layout.row, events));
-    	//Log.i("LOOK!", "before setting calendarNames");
-    	//setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, calendarNames));
     }
     
     void handleException(Exception e) {
@@ -525,8 +548,10 @@ public class AnimeImportsAppActivity extends ListActivity {
     		if(event != null) {
     			TextView tt = (TextView) v.findViewById(R.id.toptext);
     			TextView bt = (TextView) v.findViewById(R.id.bottomtext);
+    			ImageView icon = (ImageView) v.findViewById(R.id.icon);
+    			icon.setImageResource(getIcon(event.getName()));
     			if(tt != null) {
-    				tt.setText("Event: " + event.getName());
+    				tt.setText(event.getName());
     			}
     			if(bt != null) {
     				bt.setText("Date: " + event.getDate() + ", " + event.getTime());
@@ -534,5 +559,47 @@ public class AnimeImportsAppActivity extends ListActivity {
     		}
     		return v;
     	}
+    }
+    
+    /**
+     * Returns the appropriate icon for the provided event
+     * Draft: return the latest (at the time) set's Common symbol
+     * FNM: return the latest (at the time) set's Uncommon symbol
+     * Release/PreRelease/Gameday: return the latest (at the time) set's Rare symbol
+     * GPT: return the latest (at the time) set's Mythic symbol
+     * @param input
+     * @return
+     */
+    private int getIcon(String input) {
+    	int retVal = 0;
+    	if(input.toLowerCase().contains("draft")) {
+    		if(input.toLowerCase().contains("fnm")) {
+        		retVal = R.drawable.icon_isd_uncommon;
+        	}
+    		else {
+    			retVal = R.drawable.icon_isd_common;
+    		}
+    	}
+    	
+    	if(input.toLowerCase().contains("release") || input.toLowerCase().contains("prerelease") || 
+    			input.toLowerCase().contains("game day") || input.toLowerCase().contains("launch")) {
+    		retVal = R.drawable.icon_isd_rare;
+    	}
+    	
+    	if(input.toLowerCase().contains("gpt") ||
+    			input.toLowerCase().contains("grand prix")) {
+    		retVal = R.drawable.icon_isd_mythic;
+    	}
+    	
+    	if(input.toLowerCase().contains("edh")) {
+    		if(input.toLowerCase().contains("free play")) {
+    			retVal = R.drawable.icon_edh_common;
+    		}
+    		else {
+    			retVal = R.drawable.icon_edh_uncommon;
+    		}
+    	}
+    	
+    	return retVal;
     }
 }

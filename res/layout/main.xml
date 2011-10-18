@@ -5,14 +5,12 @@
     android:layout_height="fill_parent" 
     android:orientation="vertical">
     
-    <TextView android:textAppearance="?android:attr/textAppearanceLarge" 
-    	android:id="@+id/textView1" 
-    	android:text="@string/main_header" 
-    	android:layout_width="wrap_content" 
-    	android:layout_height="wrap_content" 
-    	android:gravity="center_horizontal" 
-    	android:layout_marginBottom="20dip" 
-    	android:layout_gravity="center_horizontal"></TextView>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    	android:orientation="horizontal"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content">
+    
+    </LinearLayout>
     
     <ListView android:id="@id/android:list"
     	android:layout_width="fill_parent"

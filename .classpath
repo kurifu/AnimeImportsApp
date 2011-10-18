@@ -5,7 +5,7 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/google-api-client-1.5.0-beta.jar"/>
 	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/google-api-client-extensions-android2-1.5.0-beta.jar"/>
-	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/google-http-client-1.5.0-beta.jar"/>
+	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/google-http-client-1.5.0-beta.jar" sourcepath="/Users/kurifuc4/.m2/repository/com/google/http-client/google-http-client/1.5.0-beta/google-http-client-1.5.0-beta-sources.jar"/>
 	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/google-http-client-extensions-android2-1.5.0-beta.jar"/>
 	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/guava-r09.jar"/>
 	<classpathentry kind="lib" path="/Users/kurifuc4/Projects/inspira_studios/anime_imports_app/lib/shared-sample-calendar-v2-1.0.0.jar"/>

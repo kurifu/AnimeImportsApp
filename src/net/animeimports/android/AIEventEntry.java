@@ -4,6 +4,63 @@ public class AIEventEntry {
 	private String name;
 	private String date;
 	private String time;
+	private EVENT_TYPE eventType;
+	private MTG_FORMAT mtgFormat;
+	private MTG_EVENT_TYPE mtgEventType;
+	
+	public enum EVENT_TYPE {
+		MTG, WARHAMMER 
+	}
+	
+	public enum MTG_FORMAT {
+		DRAFT, SEALED, MINIMASTER, STANDARD, EXTENDED, MODERN, LEGACY, VINTAGE   
+	}
+	
+	public enum MTG_EVENT_TYPE {
+		PRERELEASE, RELEASE, GPT, GAMEDAY
+	}
+	
+	/**
+	 * @return the eventType
+	 */
+	public EVENT_TYPE getEventType() {
+		return eventType;
+	}
+
+	/**
+	 * @param eventType the eventType to set
+	 */
+	public void setEventType(EVENT_TYPE eventType) {
+		this.eventType = eventType;
+	}
+
+	/**
+	 * @return the mtgFormat
+	 */
+	public MTG_FORMAT getMtgFormat() {
+		return mtgFormat;
+	}
+
+	/**
+	 * @param mtgFormat the mtgFormat to set
+	 */
+	public void setMtgFormat(MTG_FORMAT mtgFormat) {
+		this.mtgFormat = mtgFormat;
+	}
+
+	/**
+	 * @return the mtgEventType
+	 */
+	public MTG_EVENT_TYPE getMtgEventType() {
+		return mtgEventType;
+	}
+
+	/**
+	 * @param mtgEventType the mtgEventType to set
+	 */
+	public void setMtgEventType(MTG_EVENT_TYPE mtgEventType) {
+		this.mtgEventType = mtgEventType;
+	}
 	
 	public String toString() {
 		//System.out.println("CHECK: date: " + date + ", time: " + time + ", name: " + name);
