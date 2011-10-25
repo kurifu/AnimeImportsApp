@@ -166,7 +166,6 @@ public class AnimeImportsAppActivity extends ListActivity {
         
         //getListView().setTextFilterEnabled(true);
         //registerForContextMenu(getListView());
-        //gotAccount();
     }
 
     public void initializeArrays() {
@@ -178,6 +177,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	}
     	
     	if(storeInfo.size() == 0) {
+    		storeInfo.add("back");
     		storeInfo.add(STRING_STORE_ADDRESS);
     		storeInfo.add(STRING_STORE_NUMBER);
     		storeInfo.add(STRING_STORE_EMAIL);
@@ -186,7 +186,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     void loadStoreInfo() {
-    	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.main_menu_option, storeInfo);
+    	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
     }
     
@@ -212,7 +212,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.event_details, eventDetails);
     	setListAdapter(adapter);
-    	setContentView(R.layout.main);
+    	setContentView(R.layout.regular_list);
     }
     
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -229,7 +229,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    	else if(text.equals(UPCOMING_EVENTS)) {
 	    		getListView().setTextFilterEnabled(true);
 	            registerForContextMenu(getListView());
-	            gotAccount();
+	            executeRefreshCalendars();
 	    	}
 			else if(text.equals(STORE)) {
 				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(STRING_STORE_URL));
@@ -259,91 +259,10 @@ public class AnimeImportsAppActivity extends ListActivity {
     	requestInitializer.authToken = authToken;
     }
     
-    /**
-     * Write a new account name to preferences, need to remove PREF_GSESSIONID apparently?
-     * @param accountName
-     */
-    void setAccountName(String accountName) {
-    	SharedPreferences.Editor editor = settings.edit();
-    	editor.putString(PREF_ACCOUNT_NAME, accountName);
-    	editor.remove(PREF_GSESSIONID);
-    	editor.commit();
-    	this.accountName = accountName;
-    	requestInitializer.setGsessionid(null);
-    }
-    
-    private void gotAccount() {
-    	Account account = accountManager.getAccountByName(accountName);
-    	
-    	if(account != null) {
-    		Log.i("LOOK", "inside gotAccount, account != null");
-    		// If token invalid, authorize for first time with prompt?
-    		if(requestInitializer.authToken == null) {
-    			Log.i("LOOK", "inside gotAccount, gonna authenticate with screen?");	
-    			accountManager.manager.getAuthToken(account, AUTH_TOKEN_TYPE, true, new AccountManagerCallback<Bundle>() {
-    				public void run(AccountManagerFuture<Bundle> future) {
-    					try {
-    						Bundle bundle = future.getResult();
-    						if(bundle.containsKey(AccountManager.KEY_INTENT)) {
-    							Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
-    							int flags = intent.getFlags();
-    							flags &= ~Intent.FLAG_ACTIVITY_NEW_TASK;
-    							intent.setFlags(flags);
-    							startActivityForResult(intent, REQUEST_AUTHENTICATE);
-    						}
-    						else if(bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
-    							setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
-    							executeRefreshCalendars();
-    						}
-    					}
-    					catch (Exception e) {
-    						handleException(e);
-    					}
-    				}
-    			}, null);
-    		}
-    		else {
-    			executeRefreshCalendars();
-    		}
-    		return;
-    	}
-    	Log.i("LOOK", "before chooseAccount in gotAccount");
-    	chooseAccount();
-    }
-    
-    private void chooseAccount() {
-    	accountManager.manager.getAuthTokenByFeatures(GoogleAccountManager.ACCOUNT_TYPE, 
-    		AUTH_TOKEN_TYPE, null, AnimeImportsAppActivity.this, null, null, new AccountManagerCallback<Bundle>() {
-    		
-    			public void run(AccountManagerFuture<Bundle> future) {
-    				Log.i("LOOK", "inside chooseAccount > run");
-    				Bundle bundle;
-    				try {
-    					bundle = future.getResult();
-    					Log.i("DEBUG", "Account Name is " + bundle.getString(AccountManager.KEY_ACCOUNT_NAME));
-    					setAccountName(bundle.getString(AccountManager.KEY_ACCOUNT_NAME));
-    					//setAccountName("animeimports@gmail.com");
-    					setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
-    					executeRefreshCalendars();
-    				}
-    				catch(OperationCanceledException e) {
-    					Log.i("DEBUG", "OperateCanceled Exception?");
-    				}
-    				catch(AuthenticatorException e) {
-    					Log.i("DEBUG", "AuthenticationException?");
-    					handleException(e);
-    				}
-    				catch(IOException e) {
-    					Log.i("DEBUG", "IOException?");
-    					handleException(e);
-    				}
-    			}
-    	}, null);
-    }
-    
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     	super.onActivityResult(requestCode, resultCode, data);
-    	switch(requestCode) {
+    	Log.e("CHECK", "inside onActivityResult....");
+    	/*switch(requestCode) {
     	case REQUEST_AUTHENTICATE:
     		if(resultCode == RESULT_OK) {
     			gotAccount();
@@ -352,77 +271,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     			chooseAccount();
     		}
     		break;
-    	}
-    }
-    
-    public boolean onCreateOptionsMenu(Menu menu) {
-    	menu.add(0, MENU_ACCOUNTS, 0, getString(R.string.new_calendar));
-    	if(accountManager.getAccounts().length >= 2) {
-    		Log.i("DEBUG", "AccountManager has more than 2 accounts!");
-    		menu.add(0, MENU_ACCOUNTS, 0, getString(R.string.switch_account));
-    	}
-    	return true;
-    }
-    
-    public boolean onOptionsItemSelected(MenuItem item) {
-    	Log.i("DEBUG", "inside onOptionsItemSelected");
-    	switch(item.getItemId()) {
-    		case MENU_ADD:
-    			CalendarUrl url = forOwnCalendarsFeed();//TODO
-    			CalendarEntry calendar = new CalendarEntry();
-    			calendar.title = "Calendar " + new DateTime(new Date());
-    			try {
-    				Log.i("DEBUG", "onOptionsItemSelected, long chain call");
-    				client.calendarFeed().insert().execute(url, calendar);
-    			}
-    			catch(IOException e) {
-    				handleException(e);
-    			}
-    			executeRefreshCalendars();
-    			return true;
-    		case MENU_ACCOUNTS:
-    			chooseAccount();
-    			return true;
-    	}
-    	return false;
-    }
-    
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-    	super.onCreateContextMenu(menu, v, menuInfo);
-    	Log.i("DEBUG", "inside onCreateContextMenu");
-    	menu.add(0, CONTEXT_EDIT, 0, getString(R.string.update_title));
-    	menu.add(0, CONTEXT_DELETE, 0, getString(R.string.delete));
-    }
-    
-    public boolean onContextItemSelected(MenuItem item) {
-    	Log.i("DEBUG", "inside onContextItemSelected");
-    	AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-    	CalendarEntry calendar = calendars.get((int) info.id);
-    	
-    	CalendarUrl url = new CalendarUrl(calendar.getEventFeedLink());
-    	System.out.println("*** CalendarURL is: " + url.toString());
-    	url = new CalendarUrl("https://www.google.com/calendar/feeds/animeimports@gmail.com/public/full");
-    	
-    	try {
-    		switch(item.getItemId()) {
-    			case CONTEXT_EDIT:
-    				CalendarEntry patchedCalendar = calendar.clone();
-    				patchedCalendar.title = calendar.title + " UPDATED " + new DateTime(new Date());
-    				client.executePatchRelativeToOriginal(calendar, patchedCalendar);
-    				executeRefreshCalendars();
-    				return true;
-    			case CONTEXT_DELETE:
-    				client.executeDelete(calendar);
-    				executeRefreshCalendars();
-    				return true;
-    			default:
-    				return super.onContextItemSelected(item);
-    		}
-    	}
-    	catch(IOException e) {
-    		handleException(e);
-    	}
-    	return false;
+    	}*/
     }
     
     void executeRefreshCalendars() {
@@ -527,7 +376,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     		
     		if(statusCode == 401) {
     			Log.i("DEBUG", "statusCode 401, calling gotAccount?");
-    			gotAccount();
+    			//gotAccount();
     			return;
     		}
     		try {
@@ -541,7 +390,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	Log.e(TAG, e.getMessage(), e);
     }
     
-    private static CalendarUrl forRoot() {
+    /*private static CalendarUrl forRoot() {
     	return new CalendarUrl(CalendarUrl.ROOT_URL);
     }
     
@@ -563,7 +412,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		result.getPathParts().add("owncalendars");
 		result.getPathParts().add("full");
 		return result;
-    }
+    }*/
     
     public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
     	private ArrayList<AIEventEntry> items;
