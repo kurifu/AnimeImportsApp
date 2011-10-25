@@ -3,6 +3,7 @@ package net.animeimports.android;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -36,6 +37,7 @@ import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -95,10 +97,19 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private static final TextView textViewStore = null;
 	
 	// Events / Lists
-	private List<String> options_links = Lists.newArrayList();
+	private List<String> optionsLinks = Lists.newArrayList();
+	private List<String> storeInfo = Lists.newArrayList();
 	private final List<CalendarEntry> calendars = Lists.newArrayList();
 	private AIEventAdapter aiEventAdapter;
 	private static final int DAYS_IN_FUTURE = 14;
+	
+	// Store Info
+	// TODO: figure out how to store these in R.string...
+	private static String STRING_STORE_ADDRESS = "1305 Palmetto Ave  Suite C\nPacifica, CA 94044";
+	private static String STRING_STORE_NUMBER = "(650) 488-7900";
+	private static String STRING_STORE_EMAIL = "webmaster@animeimports.net";
+	private static String STRING_STORE_HOURS = "1:00pm - 7:00pm everyday";
+	private static String STRING_STORE_URL = "http://www.animeimports.net";
 	
 	public class CalendarAndroidRequestInitializer extends CalendarRequestInitializer {
 		String authToken;
@@ -147,15 +158,7 @@ public class AnimeImportsAppActivity extends ListActivity {
         client = new CalendarClient(requestInitializer.createRequestFactory());
         client.setPrettyPrint(true);
         client.setApplicationName("AnimeImportsCalendarApp");
-        
-        /*for(int i = 0; i < 5; i++) {
-        	AIEventEntry e = new AIEventEntry();
-        	e.setDate("Right Now");
-        	e.setName("Friday Night Magic");
-        	e.setTime("7:00pm");
-        	this.events.add(e);
-        }*/
-        
+        initializeArrays();
         loadMainMenu();
         
         //ArrayAdapter<AIEventEntry> songList = new ArrayAdapter<AIEventEntry>(this, R.layout.event, events);
@@ -165,38 +168,84 @@ public class AnimeImportsAppActivity extends ListActivity {
         //registerForContextMenu(getListView());
         //gotAccount();
     }
+
+    public void initializeArrays() {
+    	if(optionsLinks.size() == 0) {
+    		optionsLinks.add(UPDATES);
+    		optionsLinks.add(UPCOMING_EVENTS);
+    		optionsLinks.add(STORE);
+    		optionsLinks.add(STORE_INFO);
+    	}
+    	
+    	if(storeInfo.size() == 0) {
+    		storeInfo.add(STRING_STORE_ADDRESS);
+    		storeInfo.add(STRING_STORE_NUMBER);
+    		storeInfo.add(STRING_STORE_EMAIL);
+    		storeInfo.add(STRING_STORE_HOURS);
+    	}
+    }
+    
+    void loadStoreInfo() {
+    	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.main_menu_option, storeInfo);
+    	setListAdapter(storeInfoAdapter);
+    }
     
     void loadMainMenu() {
-    	if(options_links.size() == 0) {
-    		options_links.add(UPDATES);
-    		options_links.add(UPCOMING_EVENTS);
-    		options_links.add(STORE);
-    		options_links.add(STORE_INFO);
-    	}
-    	ArrayAdapter<String> options = new ArrayAdapter<String>(this, R.layout.main_menu_option, options_links);
+    	ArrayAdapter<String> options = new ArrayAdapter<String>(this, R.layout.main_menu_option, optionsLinks);
     	setListAdapter(options);
-    	
-    	//textViewUpdates = (TextView) options.getView(0, textViewUpdates, R.layout.main);
-    	
+    	setContentView(R.layout.main);
+    }
+    
+    void handleEventClick(int position) {
+    	System.out.println("works, position is " + position);
+		System.out.println("same position in aiEventAdapter is " + aiEventAdapter.getItems().get(position).getName());
+		
+		ArrayList<String> eventDetails = Lists.newArrayList();
+		AIEventEntry event = aiEventAdapter.getItems().get(position);
+		
+		eventDetails.add(event.getName());
+		eventDetails.add("Date: " + event.getDate() + ", " + event.getTime());
+		eventDetails.add("Event Type: " + event.getEventType());
+		eventDetails.add("MTG Event Type: " + event.getMtgEventType());
+		eventDetails.add("Format: " + event.getMtgFormat());
+		eventDetails.add("Summary: " + event.getSummary());
+		
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.event_details, eventDetails);
+    	setListAdapter(adapter);
     	setContentView(R.layout.main);
     }
     
     protected void onListItemClick(ListView l, View v, int position, long id) {
-    	String text = (String)((TextView)v).getText();
-    	if(text.equals(UPDATES)) {
-    		
+    	
+    	if(l.getAdapter() == this.aiEventAdapter) {
+    		handleEventClick(position);
     	}
-    	else if(text.equals(UPCOMING_EVENTS)) {
-    		getListView().setTextFilterEnabled(true);
-            registerForContextMenu(getListView());
-            gotAccount();
+    	else {
+    	
+	    	String text = (String)((TextView)v).getText();
+	    	if(text.equals(UPDATES)) {
+	    		
+	    	}
+	    	else if(text.equals(UPCOMING_EVENTS)) {
+	    		getListView().setTextFilterEnabled(true);
+	            registerForContextMenu(getListView());
+	            gotAccount();
+	    	}
+			else if(text.equals(STORE)) {
+				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(STRING_STORE_URL));
+				startActivity(browserIntent);
+			}
+			else if(text.equals(STORE_INFO)) {
+				Log.i("new", "inside STORE section");
+				loadStoreInfo();
+			}
+			else if(text.equals(STRING_STORE_NUMBER)) {
+				Log.i("DEBUG", "about to call");
+				Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+				//phoneIntent.
+				startActivity(phoneIntent);
+			}
     	}
-		else if(text.equals(STORE)) {
-		    		
-		}
-		else if(text.equals(STORE_INFO)) {
-			
-		}
     }
 
     /**
@@ -383,37 +432,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	calendars.clear();
     	events.clear();
     	
-    	/*try {
-    		CalendarUrl url = forAllCalendarsFeed();
-    		// page through results?
-    		while(true) {
-    			CalendarFeed feed = client.calendarFeed().list().execute(url);
-    			if(feed.calendars != null) {
-    				Log.i("DEBUG", "calling calendars.addAll(feed.calendars)");
-    				calendars.addAll(feed.calendars);
-    			}
-    			String nextLink = feed.getNextLink();
-    			if(nextLink == null) {
-    				break;
-    			}
-    		}
-    		int numCalendars = calendars.size();
-    		Log.i("DEBUG", "found " + numCalendars + " calendars");
-    		calendarNames = new String[numCalendars];
-    		for(int i = 0; i < numCalendars; i++) {
-    			calendarNames[i] = calendars.get(i).title;
-    		}
-    	}
-    	catch(IOException e) {
-    		Log.i("DEBUG", "caught an IOException");
-    		handleException(e);
-    		Log.i("DEBUG*", "After handle exception");
-
-    		calendarNames = new String[] {e.getMessage()};
-    		calendars.clear();
-    	}*/
     	// Setting up UI
-
     	try {
     		//CalendarUrl url = new CalendarUrl(calendars.get(0).getEventFeedLink());
     		Calendar now = Calendar.getInstance();
@@ -440,11 +459,14 @@ public class AnimeImportsAppActivity extends ListActivity {
    
         	CalendarUrl url = new CalendarUrl(customUrl.build());
         	System.out.println("CHECK: " + url.toString());
+        	
+        	// Throws an UnknownHostException if no connection to internet
     		EventFeed feed = client.eventFeed().list().execute(url);
 
     		for(EventEntry entry : feed.getEntries()) {
     			AIEventEntry e = new AIEventEntry();
     			System.out.println("* Event:" + entry.title);
+    			
     			if(entry.title.toUpperCase().contains("MTG")) {
     				e.setEventType(EVENT_TYPE.MTG);
     				if(entry.title.toUpperCase().contains("DRAFT")) {
@@ -462,11 +484,24 @@ public class AnimeImportsAppActivity extends ListActivity {
 	        			System.out.println("When: " + entry.when.startTime);
     				}
     			}
+    			
+    			if (entry.summary != null) {
+    				e.setSummary(entry.summary);
+    			}
+    			else {
+    				e.setSummary("...");
+    			}
+    			
     			System.out.println("Summary:" + entry.summary);
     			System.out.println("\n");
     			e.setName(entry.title);
     			events.add(e);
     		}
+    	}
+    	catch(UnknownHostException e) {
+    		System.out.println("Got it");
+    		loadMainMenu();
+    		return;
     	}
     	catch(IOException e) {
     		e.printStackTrace();
@@ -533,7 +568,14 @@ public class AnimeImportsAppActivity extends ListActivity {
     public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
     	private ArrayList<AIEventEntry> items;
     	
-    	public AIEventAdapter(Context context, int textViewResourceId, ArrayList<AIEventEntry> items) {
+    	/**
+		 * @return the items
+		 */
+		public ArrayList<AIEventEntry> getItems() {
+			return items;
+		}
+
+		public AIEventAdapter(Context context, int textViewResourceId, ArrayList<AIEventEntry> items) {
     		super(context, textViewResourceId, items);
     		this.items = items;
     	}

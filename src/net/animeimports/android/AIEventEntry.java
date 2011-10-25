@@ -7,6 +7,7 @@ public class AIEventEntry {
 	private EVENT_TYPE eventType;
 	private MTG_FORMAT mtgFormat;
 	private MTG_EVENT_TYPE mtgEventType;
+	private String summary;
 	
 	public enum EVENT_TYPE {
 		MTG, WARHAMMER 
@@ -18,6 +19,20 @@ public class AIEventEntry {
 	
 	public enum MTG_EVENT_TYPE {
 		PRERELEASE, RELEASE, GPT, GAMEDAY
+	}
+	
+	/**
+	 * @return the summary
+	 */
+	public String getSummary() {
+		return summary;
+	}
+
+	/**
+	 * @param summary the summary to set
+	 */
+	public void setSummary(String summary) {
+		this.summary = summary;
 	}
 	
 	/**

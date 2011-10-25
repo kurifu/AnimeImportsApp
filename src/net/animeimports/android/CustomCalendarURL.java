@@ -17,12 +17,10 @@ public class CustomCalendarURL extends GoogleUrl {
 	
 	private static CustomCalendarURL root() {
 		return new CustomCalendarURL("https://www.google.com/calendar/feeds/anime.imports.com%40gmail.com/public/full");
-		//return new CustomCalendarURL("https://www.google.com/calendar/feeds/freeformsoftware%40gmail.com/public/full");
 	}
 	
 	public static CustomCalendarURL getUrl() {
 		CustomCalendarURL result = root();
-		//result.pathParts.add("currentLocation"); DEPRECATED
 		return result;
 	}
 }

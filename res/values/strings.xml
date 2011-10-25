@@ -7,4 +7,9 @@
     <string name="delete">Delete</string>
     <string name="main_header">Anime Imports\nUpcoming Events</string>
     <string name="back">back</string>
+    <string name="store_address">1305 Palmetto Ave  Suite C\nPacifica, CA 94044</string>
+    <string name="store_number">(650) 488-7900</string>
+    <string name="store_email">webmaster@animeimports.net</string>
+    <string name="store_hours">1:00pm - 7:00pm everyday</string>
+    <string name="version">v1.0.0a</string>
 </resources>
