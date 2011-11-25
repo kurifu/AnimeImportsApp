@@ -126,25 +126,23 @@ public class AnimeImportsAppActivity extends ListActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        events = new ArrayList<AIEventEntry>();
-        accountManager = new GoogleAccountManager(this);
-        settings = this.getSharedPreferences(PREF, 0);
-        requestInitializer = new CalendarAndroidRequestInitializer();
-        client = new CalendarClient(requestInitializer.createRequestFactory());
-        client.setPrettyPrint(true);
-        client.setApplicationName("AnimeImportsCalendarApp");
-        initializeArrays();
-        loadMainMenu();
         setContentView(R.layout.main);
         
-        mainLogo = (ImageView) findViewById(R.drawable.logo2);
-        if(mainLogo == null) 
-        	System.out.println("mainLogo is null");
-        //mainLogo = (ImageView) findViewById(R.drawable.logo2);
-        //mainLogo.setVisibility(View.INVISIBLE);
+        mainLogo = (ImageView) findViewById(R.id.imageView1);
+       
+        initializeApp();
+        runOnUiThread(loadMainMenuThread);
     }
 
-    public void initializeArrays() {
+    public void initializeApp() {
+    	events = new ArrayList<AIEventEntry>();
+		accountManager = new GoogleAccountManager(this);
+	    settings = this.getSharedPreferences(PREF, 0);
+	    requestInitializer = new CalendarAndroidRequestInitializer();
+	    client = new CalendarClient(requestInitializer.createRequestFactory());
+	    client.setPrettyPrint(true);
+	    client.setApplicationName("AnimeImportsCalendarApp");
+	    
     	if(optionsLinks.size() == 0) {
     		optionsLinks.add(UPDATES);
     		optionsLinks.add(UPCOMING_EVENTS);
@@ -197,7 +195,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     			// If back button was clicked, figure out which level we load
     			if(position == 0) {
     				if(depth == 1) {
-    					loadMainMenu();
+    					//loadMainMenu();
+    					runOnUiThread(loadMainMenuThread);
     				}
     				else if(depth == 2) {
     		            executeRefreshCalendars();
@@ -352,12 +351,11 @@ public class AnimeImportsAppActivity extends ListActivity {
     		//TODO
     		runOnUiThread(loadMainMenuThread);
     		runOnUiThread(toastThread);
-    		//loadMainMenu();
     		return;
     	}
     	catch(SocketTimeoutException e) {
     		System.out.println("Server is taking longer than expected to respond, please try again");
-    		loadMainMenu();
+    		runOnUiThread(loadMainMenuThread);
     	}
     	catch(IOException e) {
     		System.out.println("IOException yo");
@@ -377,21 +375,16 @@ public class AnimeImportsAppActivity extends ListActivity {
     	@Override
     	public void run() {
     		depth = 0;
-    		m_ProgressDialog.dismiss();
+    		
+    		if(m_ProgressDialog != null)
+    			m_ProgressDialog.dismiss();
         	currentMenu = "";
         	ArrayAdapter<String> options = new ArrayAdapter<String>(AnimeImportsAppActivity.this, R.layout.row_main_menu, optionsLinks);
         	setListAdapter(options);
-        	setContentView(R.layout.main);
+        	//setContentView(R.layout.main);
+        	mainLogo.setVisibility(View.VISIBLE);
     	}
     };
-    	
-    void loadMainMenu() {
-    	depth = 0;
-    	currentMenu = "";
-    	ArrayAdapter<String> options = new ArrayAdapter<String>(this, R.layout.row_main_menu, optionsLinks);
-    	setListAdapter(options);
-    	setContentView(R.layout.main);
-    }
     
     private Runnable toastThread = new Runnable() {
     	@Override
