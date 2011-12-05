@@ -127,9 +127,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
         mainLogo = (ImageView) findViewById(R.id.imageView1);
-       
         initializeApp();
         runOnUiThread(loadMainMenuThread);
     }
@@ -164,6 +162,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	currentMenu = STORE_INFO;
     	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
+    	mainLogo.setVisibility(View.GONE);
     }
     
     /**
@@ -190,17 +189,22 @@ public class AnimeImportsAppActivity extends ListActivity {
     
     protected void onListItemClick(ListView l, View v, int position, long id) {
     	System.out.println("Depth is " + depth);
-    	// If this is the list of Events
+    	// If this is not the main menu
     	if(depth > 0) {
     			// If back button was clicked, figure out which level we load
     			if(position == 0) {
     				if(depth == 1) {
-    					//loadMainMenu();
     					runOnUiThread(loadMainMenuThread);
     				}
     				else if(depth == 2) {
-    		            executeRefreshCalendars();
+    					getEvents();
     				}
+    			}
+    			else if(position == 2) {
+					Log.i("DEBUG", "about to call");
+					Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+					phoneIntent.setData(Uri.parse("tel:" + STRING_STORE_NUMBER));
+					startActivity(phoneIntent);
     			}
     			// Figure out which level we're on; Upcoming Events List or Store Info
     			else if(depth == 1) {
@@ -208,45 +212,37 @@ public class AnimeImportsAppActivity extends ListActivity {
     					handleEventClick(position);
     				}
     			}
-    			// If you clicked on an Event's details, do nothing
     			else {
-    				System.out.println("Not doing anything");
+    				// Event's details, not implemented yet
+    				Log.i("AI DEBUG", "Not implemented yet");
     			}
     	}
     	// Otherwise this is the Main Menu
     	else {
 	    	String text = (String)((TextView)v).getText();
-	    	System.out.println("Depth is 0, text is " + text);
 	    	if(text.equals(UPDATES)) {
 	    		
 	    	}
 	    	else if(text.equals(UPCOMING_EVENTS)) {
-	    		// OLD PLACE
-	    		Runnable eventFetchThread = new Runnable() {
-	    			@Override
-	    			public void run() {
-	    				executeRefreshCalendars();
-	    			}
-	    		};
-	    		Thread thread = new Thread(null, eventFetchThread, "MagentoBackground");
-	    		thread.start();
-	    		m_ProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
+	    		getEvents();
 	    	}
 			else if(text.equals(STORE)) {
 				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(STRING_STORE_URL));
 				startActivity(browserIntent);
 			}
 			else if(text.equals(STORE_INFO)) {
-				Log.i("new", "inside STORE section");
 				loadStoreInfo();
 			}
-			else if(text.equals(STRING_STORE_NUMBER)) {
-				Log.i("DEBUG", "about to call");
-				Intent phoneIntent = new Intent(Intent.ACTION_CALL);
-				//phoneIntent.
-				startActivity(phoneIntent);
-			}
     	}
+    }
+    
+    /**
+     * Calls the eventFetchThread to query GoogleCalendar for events and loads a ProgressDialog
+     */
+    void getEvents() {
+		Thread thread = new Thread(null, eventFetchThread, "MagentoBackground");
+		thread.start();
+		m_ProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
     }
 
     /**
@@ -275,133 +271,131 @@ public class AnimeImportsAppActivity extends ListActivity {
     	}*/
     }
     
-    void executeRefreshCalendars() {
-    	depth = 1;
-    	currentMenu = UPCOMING_EVENTS;
-    	
-    	// TODO: figure out caching
-    	events = new ArrayList<AIEventEntry>();
-    	
-    	// Setting up UI
-    	try {
-    		Calendar now = Calendar.getInstance();
-    		
-    		Date startDate = new Date();
-    		startDate.setYear(now.get(Calendar.YEAR)-1900);
-    		startDate.setMonth(now.get(Calendar.MONTH)-8);
-    		startDate.setDate(now.get(Calendar.DATE)-10);
-    		startDate.setHours(now.get(Calendar.HOUR));
-    		startDate.setMinutes(now.get(Calendar.MINUTE));
-    		startDate.setSeconds(now.get(Calendar.SECOND));
-    		
-    		Date endDate = new Date();
-    		endDate.setYear(startDate.getYear());
-    		endDate.setMonth(startDate.getMonth());
-    		endDate.setDate(startDate.getDate() + (2*DAYS_IN_FUTURE));
-    		endDate.setHours(startDate.getHours());
-    		endDate.setMinutes(startDate.getMinutes());
-    		endDate.setSeconds(startDate.getSeconds());
-
-    		CustomCalendarURL customUrl = CustomCalendarURL.getUrl();
-    		customUrl.startMin = new DateTime(startDate);
-    		customUrl.startMax = new DateTime(endDate);
-   
-        	CalendarUrl url = new CalendarUrl(customUrl.build());
-        	
-        	// Throws an UnknownHostException if no connection to internet
-        	// Throws a SocketTimeoutException 
-    		EventFeed feed = client.eventFeed().list().execute(url);
-
-    		for(EventEntry entry : feed.getEntries()) {
-    			AIEventEntry e = new AIEventEntry();
-    			//System.out.println("* Event:" + entry.title);
-    			
-    			if(entry.title.toUpperCase().contains("MTG")) {
-    				e.setEventType(EVENT_TYPE.MTG);
-    				if(entry.title.toUpperCase().contains("DRAFT")) {
-    					e.setMtgFormat(MTG_FORMAT.DRAFT);
-    				}
-    			}
-    			else if(entry.title.contains("Warhammer")) {
-    				e.setEventType(EVENT_TYPE.WARHAMMER);
-    			}
-    			
-    			if(entry.when != null) {
-    				if(entry.when.startTime != null) {
-	    				e.setDate(entry.when.startTime.toString().substring(0, 10));
-	        			e.setTime(entry.when.startTime.toString().substring(11, 19));
-	        			//System.out.println("When: " + entry.when.startTime);
-    				}
-    			}
-    			
-    			if (entry.summary != null) {
-    				e.setSummary(entry.summary);
-    			}
-    			else {
-    				e.setSummary("...");
-    			}
-    			
-    			//System.out.println("Summary:" + entry.summary + "\n");
-    			e.setName(entry.title);
-    			events.add(e);
-    		}
-    	}
-    	catch(UnknownHostException e) {
-    		System.out.println("UnknownHostException, make sure you're connected to the internet");
-    		//TODO
-    		runOnUiThread(loadMainMenuThread);
-    		runOnUiThread(toastThread);
-    		return;
-    	}
-    	catch(SocketTimeoutException e) {
-    		System.out.println("Server is taking longer than expected to respond, please try again");
-    		runOnUiThread(loadMainMenuThread);
-    	}
-    	catch(IOException e) {
-    		System.out.println("IOException yo");
-    		e.printStackTrace();
-    	}
-    	
-    	try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	runOnUiThread(returnRes);
+    private Date getStartDate() {
+    	Calendar now = Calendar.getInstance();
+    	Date startDate = new Date();
+		startDate.setYear(now.get(Calendar.YEAR)-1900);
+		startDate.setMonth(now.get(Calendar.MONTH));
+		startDate.setDate(now.get(Calendar.DATE));
+		startDate.setHours(now.get(Calendar.HOUR));
+		startDate.setMinutes(now.get(Calendar.MINUTE));
+		startDate.setSeconds(now.get(Calendar.SECOND));
+		return startDate;
     }
     
+    private Date getEndDate() {
+    	Calendar now = Calendar.getInstance();
+		Date endDate = new Date();
+		endDate.setYear(now.get(Calendar.YEAR)-1900);
+		endDate.setMonth(now.get(Calendar.MONTH));
+		endDate.setDate(now.get(Calendar.DATE) + DAYS_IN_FUTURE);
+		endDate.setHours(now.get(Calendar.HOUR));
+		endDate.setMinutes(now.get(Calendar.MINUTE));
+		endDate.setSeconds(now.get(Calendar.SECOND));
+		return endDate;
+    }
+    
+    private Runnable eventFetchThread = new Runnable() {
+		@Override
+		public void run() {
+		
+	    	depth = 1;
+	    	currentMenu = UPCOMING_EVENTS;
+	    	
+	    	// TODO: figure out caching
+	    	events = new ArrayList<AIEventEntry>();
+	    	
+	    	try {
+	    		CustomCalendarURL customUrl = CustomCalendarURL.getUrl();
+	    		customUrl.startMin = new DateTime(getStartDate());
+	    		customUrl.startMax = new DateTime(getEndDate());
+	        	CalendarUrl url = new CalendarUrl(customUrl.build());
+	    		EventFeed feed = client.eventFeed().list().execute(url);
+
+	    		for(EventEntry entry : feed.getEntries()) {
+	    			AIEventEntry e = new AIEventEntry();
+	    			if(entry.title.toUpperCase().contains("MTG")) {
+	    				e.setEventType(EVENT_TYPE.MTG);
+	    				if(entry.title.toUpperCase().contains("DRAFT")) {
+	    					e.setMtgFormat(MTG_FORMAT.DRAFT);
+	    				}
+	    			}
+	    			else if(entry.title.contains("Warhammer")) {
+	    				e.setEventType(EVENT_TYPE.WARHAMMER);
+	    			}
+	    			
+	    			if(entry.when != null) {
+	    				if(entry.when.startTime != null) {
+		    				e.setDate(entry.when.startTime.toString().substring(0, 10));
+		        			e.setTime(entry.when.startTime.toString().substring(11, 19));
+	    				}
+	    			}
+	    			
+	    			if (entry.summary != null) {
+	    				e.setSummary(entry.summary);
+	    			}
+	    			else {
+	    				e.setSummary("...");
+	    			}
+
+	    			e.setName(entry.title);
+	    			events.add(e);
+	    		}
+	    	}
+	    	catch(UnknownHostException e) {
+	    		runOnUiThread(recoverThread);
+	    		runOnUiThread(loadMainMenuThread);
+	    		return;
+	    	}
+	    	catch(SocketTimeoutException e) {
+	    		runOnUiThread(recoverThread);
+	    		runOnUiThread(loadMainMenuThread);
+	    	}
+	    	catch(IOException e) {
+	    		System.out.println("IOException yo");
+	    		e.printStackTrace();
+	    	}
+	    	
+	    	runOnUiThread(loadEventsThread);
+		}
+	};
+    
+	/**
+	 * Loads the main menu, called when we have an UnknownHostException or SocketTimeoutException
+	 */
     private Runnable loadMainMenuThread = new Runnable() {
     	@Override
     	public void run() {
     		depth = 0;
-    		
     		if(m_ProgressDialog != null)
     			m_ProgressDialog.dismiss();
         	currentMenu = "";
         	ArrayAdapter<String> options = new ArrayAdapter<String>(AnimeImportsAppActivity.this, R.layout.row_main_menu, optionsLinks);
         	setListAdapter(options);
-        	//setContentView(R.layout.main);
         	mainLogo.setVisibility(View.VISIBLE);
     	}
     };
     
-    private Runnable toastThread = new Runnable() {
+    /**
+     * Called when we encounter an exception; alert the user and load the main menu
+     */
+    private Runnable recoverThread = new Runnable() {
     	@Override
     	public void run() {
     		Context context = getApplicationContext();
-    		CharSequence text = "Hello!";
-    		Toast toast = Toast.makeText(context, text, Toast.LENGTH_LONG);
+    		CharSequence text = "Make sure you are connected to the internet or have reception and try again";
+    		Toast toast = Toast.makeText(context, text, 100000);
     		toast.show();
     	}
     };
     
     /**
-     * Return thread, called after executeRefreshCalendars has already filled our events array with events
+     * Called after eventFetchThread has already filled our events array with events
      */
-    private Runnable returnRes = new Runnable() {
+    private Runnable loadEventsThread = new Runnable() {
     	@Override
     	public void run() {
+    		mainLogo.setVisibility(View.GONE);
     		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
             setListAdapter(aiEventAdapter);
     		m_ProgressDialog.dismiss();
@@ -455,7 +449,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    				tt.setText(event.getName());
 	    			}
 	    			if(bt != null) {
-	    				bt.setText("Date: " + event.getDate() + ", " + event.getTime());
+	    				bt.setText(event.getDate() + ", " + event.getTime());
 	    			}
     			}
     		}
@@ -475,16 +469,20 @@ public class AnimeImportsAppActivity extends ListActivity {
     private int getIcon(String input) {
     	int retVal = R.drawable.icon;
     	if(input.toLowerCase().contains("draft")) {
-    		if(input.toLowerCase().contains("fnm")) {
-        		retVal = R.drawable.icon_isd_uncommon;
-        	}
-    		else {
-    			retVal = R.drawable.icon_isd_common;
-    		}
+    		retVal = R.drawable.icon_draft;
+    	}
+    	else if(input.toLowerCase().contains("hg")) {
+    		retVal = R.drawable.icon_2hg;
+    	}
+    	else if(input.toLowerCase().contains("sealed")) {
+    		retVal = R.drawable.icon_sealed;
+    	}
+    	else if(input.toLowerCase().contains("standard")) {
+    		retVal = R.drawable.icon_standard;
     	}
     	
     	if(input.toLowerCase().contains("release") || input.toLowerCase().contains("prerelease") || 
-    			input.toLowerCase().contains("game day") || input.toLowerCase().contains("launch")) {
+    		input.toLowerCase().contains("game day") || input.toLowerCase().contains("launch")) {
     		retVal = R.drawable.icon_isd_rare;
     	}
     	
