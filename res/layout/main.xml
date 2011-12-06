@@ -6,22 +6,18 @@
     android:orientation="vertical" android:gravity="center_horizontal">
     
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    	android:orientation="horizontal"
     	android:layout_width="fill_parent"
-    	android:layout_height="wrap_content">
+    	android:layout_height="fill_parent" android:orientation="vertical">
+        <ImageView android:layout_height="wrap_content" 
+        	android:layout_width="wrap_content" 
+        	android:src="@drawable/logo2" 
+        	android:layout_gravity="center_horizontal" android:id="@+id/imageView1"></ImageView>
         <ListView android:drawSelectorOnTop="false" 
         	android:layout_width="fill_parent" 
-        	android:layout_height="wrap_content" 
+        	android:layout_height="fill_parent" 
         	android:layout_weight="1" 
         	android:id="@+id/android:list" 
         	android:layout_gravity="center_horizontal"></ListView>
     
     </LinearLayout>
-    <TextView android:id="@+id/textView1" 
-    	android:layout_width="wrap_content" 
-    	android:layout_height="wrap_content" 
-    	android:text="@string/version" 
-    	android:layout_alignParentBottom="true"
-    	android:layout_centerHorizontal="true"></TextView>
-
 </RelativeLayout>

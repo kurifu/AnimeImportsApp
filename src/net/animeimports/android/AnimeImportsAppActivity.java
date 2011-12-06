@@ -1,21 +1,16 @@
 package net.animeimports.android;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import com.google.api.services.calendar.CalendarClient;
 import com.google.api.services.calendar.CalendarRequestInitializer;
 import com.google.api.services.calendar.CalendarUrl;
-import com.google.api.services.calendar.model.CalendarEntry;
-import com.google.api.services.calendar.model.CalendarFeed;
 import com.google.api.services.calendar.model.EventEntry;
 import com.google.api.services.calendar.model.EventFeed;
 import com.google.api.client.extensions.android2.AndroidHttp;
@@ -23,36 +18,23 @@ import com.google.api.client.googleapis.GoogleHeaders;
 import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.util.DateTime;
 import com.google.common.collect.Lists;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
-import android.app.Activity;
+import android.app.ProgressDialog;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.View.OnClickListener;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -62,17 +44,9 @@ import net.animeimports.android.AIEventEntry.EVENT_TYPE;
 import net.animeimports.android.AIEventEntry.MTG_FORMAT;
 
 public class AnimeImportsAppActivity extends ListActivity {
-	private ArrayList<AIEventEntry> events = Lists.newArrayList();
 	
 	// GoogleCalendar
-	private static Level LOGGING_LEVEL = Level.CONFIG;
-	private static final String AUTH_TOKEN_TYPE = "cl";
 	private static final String TAG = "CalendarSample";
-	private static final int MENU_ADD = 0;
-	private static final int MENU_ACCOUNTS = 1;
-	private static final int CONTEXT_EDIT = 0;
-	private static final int CONTEXT_DELETE = 1;
-	private static final int REQUEST_AUTHENTICATE = 0;
 	CalendarClient client;
 	final HttpTransport transport = AndroidHttp.newCompatibleTransport();
 	static final String PREF = TAG;
@@ -91,31 +65,24 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private static final String UPCOMING_EVENTS = "Upcoming Events";
 	private static final String UPDATES = "Updates";
 	private static final String STORE = "Store";
-	private static final TextView textViewStoreInfo = null;
-	private static final TextView textViewUpcomingEvents = null;
-	private static final TextView textViewUpdates = null;
-	private static final TextView textViewStore = null;
 	
 	// Events / Lists
 	private List<String> optionsLinks = Lists.newArrayList();
 	private List<String> storeInfo = Lists.newArrayList();
-	private final List<CalendarEntry> calendars = Lists.newArrayList();
 	private AIEventAdapter aiEventAdapter;
 	private static final int DAYS_IN_FUTURE = 14;
 	
-	// Store Info
-	// TODO: figure out how to store these in R.string...
-	private static String STRING_STORE_ADDRESS = "1305 Palmetto Ave  Suite C\nPacifica, CA 94044";
-	private static String STRING_STORE_NUMBER = "(650) 488-7900";
-	private static String STRING_STORE_EMAIL = "webmaster@animeimports.net";
-	private static String STRING_STORE_HOURS = "1:00pm - 7:00pm everyday";
-	private static String STRING_STORE_URL = "http://www.animeimports.net";
+	private static int depth = 0;
+	private static String currentMenu = "";
+	protected ProgressDialog m_ProgressDialog = null;
+	private ArrayList<AIEventEntry> events = null;
+	private ImageView mainLogo = null;
 	
 	/**
 	 * Old code from GoogleCalendar Api examples, not entirely sure this is being used... 
 	 * TODO: flag for delete
 	 */
-	public class CalendarAndroidRequestInitializer extends CalendarRequestInitializer {
+ 	public class CalendarAndroidRequestInitializer extends CalendarRequestInitializer {
 		String authToken;
 		
 		public CalendarAndroidRequestInitializer() {
@@ -151,29 +118,30 @@ public class AnimeImportsAppActivity extends ListActivity {
 		}
 	}
 	
-    /** Called when the activity is first created. */
+    /**
+     *  Called when the activity is first created. 
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Logger.getLogger("com.google.api.client").setLevel(LOGGING_LEVEL);
-        accountManager = new GoogleAccountManager(this);
-        settings = this.getSharedPreferences(PREF, 0);
-        requestInitializer = new CalendarAndroidRequestInitializer();
-        client = new CalendarClient(requestInitializer.createRequestFactory());
-        client.setPrettyPrint(true);
-        client.setApplicationName("AnimeImportsCalendarApp");
-        initializeArrays();
-        loadMainMenu();
-        
-        //ArrayAdapter<AIEventEntry> songList = new ArrayAdapter<AIEventEntry>(this, R.layout.event, events);
-		//setListAdapter(songList);
-        
-        //getListView().setTextFilterEnabled(true);
-        //registerForContextMenu(getListView());
-        //gotAccount();
+        setContentView(R.layout.main);
+        mainLogo = (ImageView) findViewById(R.id.imageView1);
+        initializeApp();
+        runOnUiThread(loadMainMenuThread);
     }
 
-    public void initializeArrays() {
+    /**
+     * Initialize arrays and data members
+     */
+    public void initializeApp() {
+    	events = new ArrayList<AIEventEntry>();
+		accountManager = new GoogleAccountManager(this);
+	    settings = this.getSharedPreferences(PREF, 0);
+	    requestInitializer = new CalendarAndroidRequestInitializer();
+	    client = new CalendarClient(requestInitializer.createRequestFactory());
+	    client.setPrettyPrint(true);
+	    client.setApplicationName("AnimeImportsCalendarApp");
+	    
     	if(optionsLinks.size() == 0) {
     		optionsLinks.add(UPDATES);
     		optionsLinks.add(UPCOMING_EVENTS);
@@ -182,31 +150,36 @@ public class AnimeImportsAppActivity extends ListActivity {
     	}
     	
     	if(storeInfo.size() == 0) {
-    		storeInfo.add(STRING_STORE_ADDRESS);
-    		storeInfo.add(STRING_STORE_NUMBER);
-    		storeInfo.add(STRING_STORE_EMAIL);
-    		storeInfo.add(STRING_STORE_HOURS);
+    		storeInfo.add("back");
+    		storeInfo.add(this.getString(R.string.store_address));
+    		storeInfo.add(this.getString(R.string.store_number));
+    		storeInfo.add(this.getString(R.string.store_email));
+    		storeInfo.add(this.getString(R.string.store_hours));
     	}
     }
     
+    /**
+     * Populate the array adapter, hide the main logo
+     */
     void loadStoreInfo() {
-    	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.store_info, storeInfo);
+    	depth = 1;
+    	currentMenu = STORE_INFO;
+    	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
+    	mainLogo.setVisibility(View.GONE);
     }
     
-    void loadMainMenu() {
-    	ArrayAdapter<String> options = new ArrayAdapter<String>(this, R.layout.main_menu_option, optionsLinks);
-    	setListAdapter(options);
-    	setContentView(R.layout.main);
-    }
-    
+    /**
+     * Loads all details about a particular event, called when an Event is clicked
+     * @param position
+     */
     void handleEventClick(int position) {
-    	System.out.println("works, position is " + position);
-		System.out.println("same position in aiEventAdapter is " + aiEventAdapter.getItems().get(position).getName());
-		
+    	depth = 2;		
+    	currentMenu = UPCOMING_EVENTS;
 		ArrayList<String> eventDetails = Lists.newArrayList();
 		AIEventEntry event = aiEventAdapter.getItems().get(position);
 		
+		eventDetails.add("back");
 		eventDetails.add(event.getName());
 		eventDetails.add("Date: " + event.getDate() + ", " + event.getTime());
 		eventDetails.add("Event Type: " + event.getEventType());
@@ -214,42 +187,69 @@ public class AnimeImportsAppActivity extends ListActivity {
 		eventDetails.add("Format: " + event.getMtgFormat());
 		eventDetails.add("Summary: " + event.getSummary());
 		
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.event_details, eventDetails);
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.row_event_details, eventDetails);
     	setListAdapter(adapter);
-    	setContentView(R.layout.main);
     }
     
+    /**
+     * Handles all clicks for any menu depth using depth and position
+     */
     protected void onListItemClick(ListView l, View v, int position, long id) {
-    	
-    	if(l.getAdapter() == this.aiEventAdapter) {
-    		handleEventClick(position);
+    	System.out.println("Depth is " + depth);
+    	// If this is not the main menu
+    	if(depth > 0) {
+    			// If back button was clicked, figure out which level we load
+    			if(position == 0) {
+    				if(depth == 1) {
+    					runOnUiThread(loadMainMenuThread);
+    				}
+    				else if(depth == 2) {
+    					getEvents();
+    				}
+    			}
+    			else if(position == 2) {
+					Log.i("DEBUG", "about to call");
+					Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+					phoneIntent.setData(Uri.parse("tel:" + this.getString(R.string.store_number)));
+					startActivity(phoneIntent);
+    			}
+    			// Figure out which level we're on; Upcoming Events List or Store Info
+    			else if(depth == 1) {
+    				if(currentMenu.equals(UPCOMING_EVENTS)) {
+    					handleEventClick(position);
+    				}
+    			}
+    			else {
+    				// Event's details, not implemented yet
+    				Log.i("AI DEBUG", "Not implemented yet");
+    			}
     	}
+    	// Otherwise this is the Main Menu
     	else {
-    	
 	    	String text = (String)((TextView)v).getText();
 	    	if(text.equals(UPDATES)) {
 	    		
 	    	}
 	    	else if(text.equals(UPCOMING_EVENTS)) {
-	    		getListView().setTextFilterEnabled(true);
-	            registerForContextMenu(getListView());
-	            gotAccount();
+	    		getEvents();
 	    	}
 			else if(text.equals(STORE)) {
-				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(STRING_STORE_URL));
+				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(this.getString(R.string.store_url)));
 				startActivity(browserIntent);
 			}
 			else if(text.equals(STORE_INFO)) {
-				Log.i("new", "inside STORE section");
 				loadStoreInfo();
 			}
-			else if(text.equals(STRING_STORE_NUMBER)) {
-				Log.i("DEBUG", "about to call");
-				Intent phoneIntent = new Intent(Intent.ACTION_CALL);
-				//phoneIntent.
-				startActivity(phoneIntent);
-			}
     	}
+    }
+   
+    /**
+     * Calls the eventFetchThread to query GoogleCalendar for events and loads a ProgressDialog
+     */
+    void getEvents() {
+		Thread thread = new Thread(null, eventFetchThread, "MagentoBackground");
+		thread.start();
+		m_ProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
     }
 
     /**
@@ -263,91 +263,10 @@ public class AnimeImportsAppActivity extends ListActivity {
     	requestInitializer.authToken = authToken;
     }
     
-    /**
-     * Write a new account name to preferences, need to remove PREF_GSESSIONID apparently?
-     * @param accountName
-     */
-    void setAccountName(String accountName) {
-    	SharedPreferences.Editor editor = settings.edit();
-    	editor.putString(PREF_ACCOUNT_NAME, accountName);
-    	editor.remove(PREF_GSESSIONID);
-    	editor.commit();
-    	this.accountName = accountName;
-    	requestInitializer.setGsessionid(null);
-    }
-    
-    private void gotAccount() {
-    	Account account = accountManager.getAccountByName(accountName);
-    	
-    	if(account != null) {
-    		Log.i("LOOK", "inside gotAccount, account != null");
-    		// If token invalid, authorize for first time with prompt?
-    		if(requestInitializer.authToken == null) {
-    			Log.i("LOOK", "inside gotAccount, gonna authenticate with screen?");	
-    			accountManager.manager.getAuthToken(account, AUTH_TOKEN_TYPE, true, new AccountManagerCallback<Bundle>() {
-    				public void run(AccountManagerFuture<Bundle> future) {
-    					try {
-    						Bundle bundle = future.getResult();
-    						if(bundle.containsKey(AccountManager.KEY_INTENT)) {
-    							Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
-    							int flags = intent.getFlags();
-    							flags &= ~Intent.FLAG_ACTIVITY_NEW_TASK;
-    							intent.setFlags(flags);
-    							startActivityForResult(intent, REQUEST_AUTHENTICATE);
-    						}
-    						else if(bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
-    							setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
-    							executeRefreshCalendars();
-    						}
-    					}
-    					catch (Exception e) {
-    						handleException(e);
-    					}
-    				}
-    			}, null);
-    		}
-    		else {
-    			executeRefreshCalendars();
-    		}
-    		return;
-    	}
-    	Log.i("LOOK", "before chooseAccount in gotAccount");
-    	chooseAccount();
-    }
-    
-    private void chooseAccount() {
-    	accountManager.manager.getAuthTokenByFeatures(GoogleAccountManager.ACCOUNT_TYPE, 
-    		AUTH_TOKEN_TYPE, null, AnimeImportsAppActivity.this, null, null, new AccountManagerCallback<Bundle>() {
-    		
-    			public void run(AccountManagerFuture<Bundle> future) {
-    				Log.i("LOOK", "inside chooseAccount > run");
-    				Bundle bundle;
-    				try {
-    					bundle = future.getResult();
-    					Log.i("DEBUG", "Account Name is " + bundle.getString(AccountManager.KEY_ACCOUNT_NAME));
-    					setAccountName(bundle.getString(AccountManager.KEY_ACCOUNT_NAME));
-    					//setAccountName("animeimports@gmail.com");
-    					setAuthToken(bundle.getString(AccountManager.KEY_AUTHTOKEN));
-    					executeRefreshCalendars();
-    				}
-    				catch(OperationCanceledException e) {
-    					Log.i("DEBUG", "OperateCanceled Exception?");
-    				}
-    				catch(AuthenticatorException e) {
-    					Log.i("DEBUG", "AuthenticationException?");
-    					handleException(e);
-    				}
-    				catch(IOException e) {
-    					Log.i("DEBUG", "IOException?");
-    					handleException(e);
-    				}
-    			}
-    	}, null);
-    }
-    
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     	super.onActivityResult(requestCode, resultCode, data);
-    	switch(requestCode) {
+    	Log.e("CHECK", "inside onActivityResult....");
+    	/*switch(requestCode) {
     	case REQUEST_AUTHENTICATE:
     		if(resultCode == RESULT_OK) {
     			gotAccount();
@@ -356,256 +275,189 @@ public class AnimeImportsAppActivity extends ListActivity {
     			chooseAccount();
     		}
     		break;
-    	}
+    	}*/
     }
     
-    public boolean onCreateOptionsMenu(Menu menu) {
-    	menu.add(0, MENU_ACCOUNTS, 0, getString(R.string.new_calendar));
-    	if(accountManager.getAccounts().length >= 2) {
-    		Log.i("DEBUG", "AccountManager has more than 2 accounts!");
-    		menu.add(0, MENU_ACCOUNTS, 0, getString(R.string.switch_account));
-    	}
-    	return true;
+    private Date getStartDate() {
+    	Calendar now = Calendar.getInstance();
+    	Date startDate = new Date();
+		startDate.setYear(now.get(Calendar.YEAR)-1900);
+		startDate.setMonth(now.get(Calendar.MONTH));
+		startDate.setDate(now.get(Calendar.DATE));
+		startDate.setHours(now.get(Calendar.HOUR));
+		startDate.setMinutes(now.get(Calendar.MINUTE));
+		startDate.setSeconds(now.get(Calendar.SECOND));
+		return startDate;
     }
     
-    public boolean onOptionsItemSelected(MenuItem item) {
-    	Log.i("DEBUG", "inside onOptionsItemSelected");
-    	switch(item.getItemId()) {
-    		case MENU_ADD:
-    			CalendarUrl url = forOwnCalendarsFeed();//TODO
-    			CalendarEntry calendar = new CalendarEntry();
-    			calendar.title = "Calendar " + new DateTime(new Date());
-    			try {
-    				Log.i("DEBUG", "onOptionsItemSelected, long chain call");
-    				client.calendarFeed().insert().execute(url, calendar);
-    			}
-    			catch(IOException e) {
-    				handleException(e);
-    			}
-    			executeRefreshCalendars();
-    			return true;
-    		case MENU_ACCOUNTS:
-    			chooseAccount();
-    			return true;
-    	}
-    	return false;
+    private Date getEndDate() {
+    	Calendar now = Calendar.getInstance();
+		Date endDate = new Date();
+		endDate.setYear(now.get(Calendar.YEAR)-1900);
+		endDate.setMonth(now.get(Calendar.MONTH));
+		endDate.setDate(now.get(Calendar.DATE) + DAYS_IN_FUTURE);
+		endDate.setHours(now.get(Calendar.HOUR));
+		endDate.setMinutes(now.get(Calendar.MINUTE));
+		endDate.setSeconds(now.get(Calendar.SECOND));
+		return endDate;
     }
     
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-    	super.onCreateContextMenu(menu, v, menuInfo);
-    	Log.i("DEBUG", "inside onCreateContextMenu");
-    	menu.add(0, CONTEXT_EDIT, 0, getString(R.string.update_title));
-    	menu.add(0, CONTEXT_DELETE, 0, getString(R.string.delete));
-    }
-    
-    public boolean onContextItemSelected(MenuItem item) {
-    	Log.i("DEBUG", "inside onContextItemSelected");
-    	AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-    	CalendarEntry calendar = calendars.get((int) info.id);
-    	
-    	CalendarUrl url = new CalendarUrl(calendar.getEventFeedLink());
-    	System.out.println("*** CalendarURL is: " + url.toString());
-    	url = new CalendarUrl("https://www.google.com/calendar/feeds/animeimports@gmail.com/public/full");
-    	
-    	try {
-    		switch(item.getItemId()) {
-    			case CONTEXT_EDIT:
-    				CalendarEntry patchedCalendar = calendar.clone();
-    				patchedCalendar.title = calendar.title + " UPDATED " + new DateTime(new Date());
-    				client.executePatchRelativeToOriginal(calendar, patchedCalendar);
-    				executeRefreshCalendars();
-    				return true;
-    			case CONTEXT_DELETE:
-    				client.executeDelete(calendar);
-    				executeRefreshCalendars();
-    				return true;
-    			default:
-    				return super.onContextItemSelected(item);
-    		}
-    	}
-    	catch(IOException e) {
-    		handleException(e);
-    	}
-    	return false;
-    }
-    
-    void executeRefreshCalendars() {
-    	Log.i("LOOK", "inside executeRefreshCalendars");
-    	String[] calendarNames;
-    	List<CalendarEntry> calendars = this.calendars;
-    	calendars.clear();
-    	events.clear();
-    	
-    	// Setting up UI
-    	try {
-    		//CalendarUrl url = new CalendarUrl(calendars.get(0).getEventFeedLink());
-    		Calendar now = Calendar.getInstance();
-    		
-    		Date startDate = new Date();
-    		startDate.setYear(now.get(Calendar.YEAR)-1900);
-    		startDate.setMonth(now.get(Calendar.MONTH)-8);
-    		startDate.setDate(now.get(Calendar.DATE)-18);
-    		startDate.setHours(now.get(Calendar.HOUR));
-    		startDate.setMinutes(now.get(Calendar.MINUTE));
-    		startDate.setSeconds(now.get(Calendar.SECOND));
-    		
-    		Date endDate = new Date();
-    		endDate.setYear(startDate.getYear());
-    		endDate.setMonth(startDate.getMonth());
-    		endDate.setDate(startDate.getDate() + DAYS_IN_FUTURE);
-    		endDate.setHours(startDate.getHours());
-    		endDate.setMinutes(startDate.getMinutes());
-    		endDate.setSeconds(startDate.getSeconds());
+    private Runnable eventFetchThread = new Runnable() {
+		@Override
+		public void run() {
+		
+	    	depth = 1;
+	    	currentMenu = UPCOMING_EVENTS;
+	    	
+	    	// TODO: figure out caching
+	    	events = new ArrayList<AIEventEntry>();
+	    	
+	    	try {
+	    		CustomCalendarURL customUrl = CustomCalendarURL.getUrl();
+	    		customUrl.startMin = new DateTime(getStartDate());
+	    		customUrl.startMax = new DateTime(getEndDate());
+	        	CalendarUrl url = new CalendarUrl(customUrl.build());
+	    		EventFeed feed = client.eventFeed().list().execute(url);
 
-    		CustomCalendarURL customUrl = CustomCalendarURL.getUrl();
-    		customUrl.startMin = new DateTime(startDate);
-    		customUrl.startMax = new DateTime(endDate);
-   
-        	CalendarUrl url = new CalendarUrl(customUrl.build());
-        	System.out.println("CHECK: " + url.toString());
-        	
-        	// Throws an UnknownHostException if no connection to internet
-    		EventFeed feed = client.eventFeed().list().execute(url);
+	    		for(EventEntry entry : feed.getEntries()) {
+	    			AIEventEntry e = new AIEventEntry();
+	    			if(entry.title.toUpperCase().contains("MTG")) {
+	    				e.setEventType(EVENT_TYPE.MTG);
+	    				if(entry.title.toUpperCase().contains("DRAFT")) {
+	    					e.setMtgFormat(MTG_FORMAT.DRAFT);
+	    				}
+	    			}
+	    			else if(entry.title.contains("Warhammer")) {
+	    				e.setEventType(EVENT_TYPE.WARHAMMER);
+	    			}
+	    			
+	    			if(entry.when != null) {
+	    				if(entry.when.startTime != null) {
+		    				e.setDate(entry.when.startTime.toString().substring(0, 10));
+		        			e.setTime(entry.when.startTime.toString().substring(11, 19));
+	    				}
+	    			}
+	    			
+	    			if (entry.summary != null) {
+	    				e.setSummary(entry.summary);
+	    			}
+	    			else {
+	    				e.setSummary("...");
+	    			}
 
-    		for(EventEntry entry : feed.getEntries()) {
-    			AIEventEntry e = new AIEventEntry();
-    			System.out.println("* Event:" + entry.title);
-    			
-    			if(entry.title.toUpperCase().contains("MTG")) {
-    				e.setEventType(EVENT_TYPE.MTG);
-    				if(entry.title.toUpperCase().contains("DRAFT")) {
-    					e.setMtgFormat(MTG_FORMAT.DRAFT);
-    				}
-    			}
-    			else if(entry.title.contains("Warhammer")) {
-    				e.setEventType(EVENT_TYPE.WARHAMMER);
-    			}
-    			
-    			if(entry.when != null) {
-    				if(entry.when.startTime != null) {
-	    				e.setDate(entry.when.startTime.toString().substring(0, 10));
-	        			e.setTime(entry.when.startTime.toString().substring(11, 19));
-	        			System.out.println("When: " + entry.when.startTime);
-    				}
-    			}
-    			
-    			if (entry.summary != null) {
-    				e.setSummary(entry.summary);
-    			}
-    			else {
-    				e.setSummary("...");
-    			}
-    			
-    			System.out.println("Summary:" + entry.summary);
-    			System.out.println("\n");
-    			e.setName(entry.title);
-    			events.add(e);
-    		}
+	    			e.setName(entry.title);
+	    			events.add(e);
+	    		}
+	    	}
+	    	catch(UnknownHostException e) {
+	    		runOnUiThread(recoverThread);
+	    		runOnUiThread(loadMainMenuThread);
+	    		return;
+	    	}
+	    	catch(SocketTimeoutException e) {
+	    		runOnUiThread(recoverThread);
+	    		runOnUiThread(loadMainMenuThread);
+	    	}
+	    	catch(IOException e) {
+	    		System.out.println("IOException yo");
+	    		e.printStackTrace();
+	    	}
+	    	
+	    	runOnUiThread(loadEventsThread);
+		}
+	};
+    
+	/**
+	 * Loads the main menu, called when we have an UnknownHostException or SocketTimeoutException
+	 */
+    private Runnable loadMainMenuThread = new Runnable() {
+    	@Override
+    	public void run() {
+    		depth = 0;
+    		if(m_ProgressDialog != null)
+    			m_ProgressDialog.dismiss();
+        	currentMenu = "";
+        	ArrayAdapter<String> options = new ArrayAdapter<String>(AnimeImportsAppActivity.this, R.layout.row_main_menu, optionsLinks);
+        	setListAdapter(options);
+        	mainLogo.setVisibility(View.VISIBLE);
     	}
-    	catch(UnknownHostException e) {
-    		System.out.println("Got it");
-    		loadMainMenu();
-    		return;
-    	}
-    	catch(IOException e) {
-    		e.printStackTrace();
-    	}
-    	
-    	this.aiEventAdapter = new AIEventAdapter(this, R.layout.row, events);
-        setListAdapter(this.aiEventAdapter);
-    }
-    
-    void handleException(Exception e) {
-    	e.printStackTrace();
-    	if(e instanceof HttpResponseException) {
-    		Log.i("DEBUG", "HttpResponseException caught");
-    		HttpResponse response = ((HttpResponseException) e).getResponse();
-    		int statusCode = response.getStatusCode();
-    		try {
-    			response.ignore();
-    		}
-    		catch(IOException e1) {
-    			System.out.println("cannot ignore");
-    			e1.printStackTrace();
-    		}
-    		
-    		if(statusCode == 401) {
-    			Log.i("DEBUG", "statusCode 401, calling gotAccount?");
-    			gotAccount();
-    			return;
-    		}
-    		try {
-    			Log.e(TAG, response.parseAsString());
-    		}
-    		catch(IOException e2) {
-    			System.out.println("cannot log response as a string");
-    			e.printStackTrace();
-    		}
-    	}
-    	Log.e(TAG, e.getMessage(), e);
-    }
-    
-    private static CalendarUrl forRoot() {
-    	return new CalendarUrl(CalendarUrl.ROOT_URL);
-    }
-    
-    private static CalendarUrl forCalendarMetafeed() {
-    	CalendarUrl result = forRoot();
-    	result.getPathParts().add("default");
-    	return result;
-    }
-    
-    private static CalendarUrl forAllCalendarsFeed() {
-    	CalendarUrl result = forCalendarMetafeed();
-    	result.getPathParts().add("owncalendars");
-    	result.getPathParts().add("full");
-    	return result;
-    }
-    
-    private static CalendarUrl forOwnCalendarsFeed() {
-		CalendarUrl result = forCalendarMetafeed();
-		result.getPathParts().add("owncalendars");
-		result.getPathParts().add("full");
-		return result;
-    }
+    };
     
     /**
-     * Custom ArrayAdapter for displaying our GoogleCalendar events
-     * @author kurifuc4
-     *
+     * Called when we encounter an exception; alert the user and load the main menu
      */
+    private Runnable recoverThread = new Runnable() {
+    	@Override
+    	public void run() {
+    		Context context = getApplicationContext();
+    		CharSequence text = "No internet connection or reception, try again later";
+    		Toast toast = Toast.makeText(context, text, Toast.LENGTH_LONG);
+    		toast.show();
+    	}
+    };
+    
+    /**
+     * Called after eventFetchThread has already filled our events array with events
+     */
+    private Runnable loadEventsThread = new Runnable() {
+    	@Override
+    	public void run() {
+    		mainLogo.setVisibility(View.GONE);
+    		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
+            setListAdapter(aiEventAdapter);
+    		m_ProgressDialog.dismiss();
+    		aiEventAdapter.notifyDataSetChanged();
+    	}
+    };
+   
     public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
     	private ArrayList<AIEventEntry> items;
     	
-    	/**
-		 * @return the items
-		 */
 		public ArrayList<AIEventEntry> getItems() {
 			return items;
 		}
 
 		public AIEventAdapter(Context context, int textViewResourceId, ArrayList<AIEventEntry> items) {
     		super(context, textViewResourceId, items);
-    		this.items = items;
+    		if(items.size() != 0) {
+	    		this.items = items;
+	    		if(!items.get(0).getName().equals("back")) {
+	    			AIEventEntry back = new AIEventEntry();
+	    			back.setName("back");
+	    			this.items.add(0, back);
+	    		}
+    		}
     	}
     	
     	public View getView(int position, View convertView, ViewGroup parent) {
     		View v = convertView;
     		if(v == null) {
     			LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    			v = vi.inflate(R.layout.row, null);
+    			v = vi.inflate(R.layout.row_event, null);
     		}
     		AIEventEntry event = items.get(position);
+    		TextView tt = (TextView) v.findViewById(R.id.toptext);
+			TextView bt = (TextView) v.findViewById(R.id.bottomtext);
+			ImageView icon = (ImageView) v.findViewById(R.id.icon);
+			
     		if(event != null) {
-    			TextView tt = (TextView) v.findViewById(R.id.toptext);
-    			TextView bt = (TextView) v.findViewById(R.id.bottomtext);
-    			ImageView icon = (ImageView) v.findViewById(R.id.icon);
-    			icon.setImageResource(getIcon(event.getName()));
-    			if(tt != null) {
-    				tt.setText(event.getName());
+    			if(event.getName().equals("Back")) {
+    				icon.setVisibility(icon.GONE);
+    				if(tt != null) {
+	    				tt.setText(event.getName());
+	    			}
+	    			if(bt != null) {
+	    				bt.setVisibility(bt.GONE);
+	    			}
     			}
-    			if(bt != null) {
-    				bt.setText("Date: " + event.getDate() + ", " + event.getTime());
+    			else {
+    				icon.setImageResource(getIcon(event.getName()));
+	    			if(tt != null) {
+	    				tt.setText(event.getName());
+	    			}
+	    			if(bt != null) {
+	    				bt.setText(event.getDate() + ", " + event.getTime());
+	    			}
     			}
     		}
     		return v;
@@ -622,18 +474,22 @@ public class AnimeImportsAppActivity extends ListActivity {
      * @return
      */
     private int getIcon(String input) {
-    	int retVal = 0;
+    	int retVal = R.drawable.icon;
     	if(input.toLowerCase().contains("draft")) {
-    		if(input.toLowerCase().contains("fnm")) {
-        		retVal = R.drawable.icon_isd_uncommon;
-        	}
-    		else {
-    			retVal = R.drawable.icon_isd_common;
-    		}
+    		retVal = R.drawable.icon_draft;
+    	}
+    	else if(input.toLowerCase().contains("hg")) {
+    		retVal = R.drawable.icon_2hg;
+    	}
+    	else if(input.toLowerCase().contains("sealed")) {
+    		retVal = R.drawable.icon_sealed;
+    	}
+    	else if(input.toLowerCase().contains("standard")) {
+    		retVal = R.drawable.icon_standard;
     	}
     	
     	if(input.toLowerCase().contains("release") || input.toLowerCase().contains("prerelease") || 
-    			input.toLowerCase().contains("game day") || input.toLowerCase().contains("launch")) {
+    		input.toLowerCase().contains("game day") || input.toLowerCase().contains("launch")) {
     		retVal = R.drawable.icon_isd_rare;
     	}
     	
