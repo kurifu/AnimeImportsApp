@@ -122,7 +122,9 @@ public class AnimeImportsAppActivity extends ListActivity {
 		}
 	}
 	
-    /** Called when the activity is first created. */
+    /**
+     *  Called when the activity is first created. 
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -132,6 +134,9 @@ public class AnimeImportsAppActivity extends ListActivity {
         runOnUiThread(loadMainMenuThread);
     }
 
+    /**
+     * Initialize arrays and data members
+     */
     public void initializeApp() {
     	events = new ArrayList<AIEventEntry>();
 		accountManager = new GoogleAccountManager(this);
@@ -157,6 +162,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	}
     }
     
+    /**
+     * Populate the array adapter, hide the main logo
+     */
     void loadStoreInfo() {
     	depth = 1;
     	currentMenu = STORE_INFO;
@@ -187,6 +195,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	setListAdapter(adapter);
     }
     
+    /**
+     * Handles all clicks for any menu depth using depth and position
+     */
     protected void onListItemClick(ListView l, View v, int position, long id) {
     	System.out.println("Depth is " + depth);
     	// If this is not the main menu
@@ -235,7 +246,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 			}
     	}
     }
-    
+   
     /**
      * Calls the eventFetchThread to query GoogleCalendar for events and loads a ProgressDialog
      */
@@ -383,8 +394,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     	@Override
     	public void run() {
     		Context context = getApplicationContext();
-    		CharSequence text = "Make sure you are connected to the internet or have reception and try again";
-    		Toast toast = Toast.makeText(context, text, 100000);
+    		CharSequence text = "No internet connection or reception, try again later";
+    		Toast toast = Toast.makeText(context, text, Toast.LENGTH_LONG);
     		toast.show();
     	}
     };
