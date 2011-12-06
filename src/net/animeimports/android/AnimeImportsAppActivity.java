@@ -111,6 +111,10 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private static String STRING_STORE_HOURS = "1:00pm - 7:00pm everyday";
 	private static String STRING_STORE_URL = "http://www.animeimports.net";
 	
+	/**
+	 * Old code from GoogleCalendar Api examples, not entirely sure this is being used... 
+	 * TODO: flag for delete
+	 */
 	public class CalendarAndroidRequestInitializer extends CalendarRequestInitializer {
 		String authToken;
 		
@@ -186,7 +190,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     void loadStoreInfo() {
-    	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.main_menu_option, storeInfo);
+    	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.store_info, storeInfo);
     	setListAdapter(storeInfoAdapter);
     }
     
@@ -565,6 +569,11 @@ public class AnimeImportsAppActivity extends ListActivity {
 		return result;
     }
     
+    /**
+     * Custom ArrayAdapter for displaying our GoogleCalendar events
+     * @author kurifuc4
+     *
+     */
     public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
     	private ArrayList<AIEventEntry> items;
     	
