@@ -5,6 +5,8 @@ import com.google.api.client.util.DateTime;
 import com.google.api.client.util.Key;
 
 public class CustomCalendarURL extends GoogleUrl {
+	private static final String CALENDAR_URL = "https://www.google.com/calendar/feeds/anime.imports.com%40gmail.com/public/full";
+	
 	@Key("start-min")
 	public DateTime startMin;
 	
@@ -16,7 +18,7 @@ public class CustomCalendarURL extends GoogleUrl {
 	}
 	
 	private static CustomCalendarURL root() {
-		return new CustomCalendarURL("https://www.google.com/calendar/feeds/anime.imports.com%40gmail.com/public/full");
+		return new CustomCalendarURL(CALENDAR_URL);
 	}
 	
 	public static CustomCalendarURL getUrl() {

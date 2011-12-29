@@ -87,13 +87,11 @@ public class AnimeImportsAppActivity extends ListActivity {
 		
 		public CalendarAndroidRequestInitializer() {
 			super(transport);
-			Log.i("DEBUG", "CalendarAndroidRequestInitializer, before setting authToken and GsessionId");
 			authToken = settings.getString(PREF_AUTH_TOKEN, null);
 			setGsessionid(settings.getString(PREF_GSESSIONID, null));
 		}
 		
 		public void intercept(HttpRequest request) throws IOException {
-			Log.i("DEBUG", "Intercept");
 			super.intercept(request);
 			request.getHeaders().setAuthorization(GoogleHeaders.getGoogleLoginValue(authToken));
 		}
@@ -193,6 +191,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     
     /**
      * Handles all clicks for any menu depth using depth and position
+     * TODO: simplify, there has to be a better way
      */
     protected void onListItemClick(ListView l, View v, int position, long id) {
     	System.out.println("Depth is " + depth);
@@ -302,14 +301,15 @@ public class AnimeImportsAppActivity extends ListActivity {
 		return endDate;
     }
     
+    /**
+     * Fetch calendar events from GoogleCalendar
+     * TODO: figure out caching
+     */
     private Runnable eventFetchThread = new Runnable() {
 		@Override
 		public void run() {
-		
 	    	depth = 1;
 	    	currentMenu = UPCOMING_EVENTS;
-	    	
-	    	// TODO: figure out caching
 	    	events = new ArrayList<AIEventEntry>();
 	    	
 	    	try {

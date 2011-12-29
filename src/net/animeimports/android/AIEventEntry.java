@@ -77,8 +77,11 @@ public class AIEventEntry {
 		this.mtgEventType = mtgEventType;
 	}
 	
+	/**
+	 * Overridden method for ArrayAdapter display. If you want to modify what we show in our custom 
+	 * AIEventAdapter, play with this
+	 */
 	public String toString() {
-		//System.out.println("CHECK: date: " + date + ", time: " + time + ", name: " + name);
 		return date + ", " + time + "\t" + name;
 	}
 	
