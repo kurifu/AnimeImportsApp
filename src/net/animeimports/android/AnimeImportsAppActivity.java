@@ -137,8 +137,8 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    settings = this.getSharedPreferences(PREF, 0);
 	    requestInitializer = new CalendarAndroidRequestInitializer();
 	    client = new CalendarClient(requestInitializer.createRequestFactory());
-	    client.setPrettyPrint(true);
-	    client.setApplicationName("AnimeImportsCalendarApp");
+	    //client.setPrettyPrint(true);
+	    //client.setApplicationName("AnimeImportsCalendarApp");
 	    
     	if(optionsLinks.size() == 0) {
     		optionsLinks.add(UPDATES);
