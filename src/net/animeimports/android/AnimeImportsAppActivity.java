@@ -310,7 +310,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    		customUrl.startMin = new DateTime(getStartDate());
 	    		customUrl.startMax = new DateTime(getEndDate());
 	        	CalendarUrl url = new CalendarUrl(customUrl.build());
-	        	System.out.println("Calendar link: " + url.toString());
 	    		EventFeed feed = client.eventFeed().list().execute(url);
 
 	    		for(EventEntry entry : feed.getEntries()) {
