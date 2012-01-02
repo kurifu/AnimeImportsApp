@@ -11,7 +11,7 @@
         <ImageView android:layout_height="wrap_content" 
         	android:layout_width="wrap_content" 
         	android:src="@drawable/logo2" 
-        	android:layout_gravity="center_horizontal" android:id="@+id/imageView1"></ImageView>
+        	android:layout_gravity="center_horizontal" android:id="@+id/imageMainLogo"></ImageView>
         <ListView android:drawSelectorOnTop="false" 
         	android:layout_width="fill_parent" 
         	android:layout_height="fill_parent" 

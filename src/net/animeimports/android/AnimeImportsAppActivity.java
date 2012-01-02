@@ -27,9 +27,7 @@ import android.app.ProgressDialog;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -123,9 +121,17 @@ public class AnimeImportsAppActivity extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        mainLogo = (ImageView) findViewById(R.id.imageView1);
+        showLogo();
         initializeApp();
         runOnUiThread(loadMainMenuThread);
+    }
+    
+    public void showLogo() {
+    	this.mainLogo = (ImageView) findViewById(R.id.imageMainLogo);
+    }
+    
+    public void hideLogo() {
+    	this.mainLogo.setVisibility(View.GONE);
     }
 
     /**
@@ -164,7 +170,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	currentMenu = STORE_INFO;
     	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
-    	mainLogo.setVisibility(View.GONE);
+    	hideLogo();
     }
     
     /**
@@ -366,7 +372,7 @@ public class AnimeImportsAppActivity extends ListActivity {
         	currentMenu = "";
         	ArrayAdapter<String> options = new ArrayAdapter<String>(AnimeImportsAppActivity.this, R.layout.row_main_menu, optionsLinks);
         	setListAdapter(options);
-        	mainLogo.setVisibility(View.VISIBLE);
+        	showLogo();
     	}
     };
     
@@ -389,7 +395,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Runnable loadEventsThread = new Runnable() {
     	@Override
     	public void run() {
-    		mainLogo.setVisibility(View.GONE);
+    		hideLogo();
     		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
             setListAdapter(aiEventAdapter);
     		mProgressDialog.dismiss();
