@@ -47,7 +47,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	
 	// GoogleCalendar
 	private static final String TAG = "CalendarSample";
-	CalendarClient client;
 	final HttpTransport transport = AndroidHttp.newCompatibleTransport();
 	static final String PREF = TAG;
 	static final String PREF_ACCOUNT_NAME = "accountName";
@@ -58,6 +57,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	SharedPreferences settings;
 	String accountName;
 	String authToken;
+	CalendarClient client;
 	CalendarAndroidRequestInitializer requestInitializer;
 	
 	// Menu related 
@@ -74,7 +74,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	
 	private static int depth = 0;
 	private static String currentMenu = "";
-	protected ProgressDialog m_ProgressDialog = null;
+	protected ProgressDialog mProgressDialog = null;
 	private ArrayList<AIEventEntry> events = null;
 	private ImageView mainLogo = null;
 	
@@ -248,34 +248,21 @@ public class AnimeImportsAppActivity extends ListActivity {
     void getEvents() {
 		Thread thread = new Thread(null, eventFetchThread, "MagentoBackground");
 		thread.start();
-		m_ProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
+		mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
     }
 
     /**
      * Write a new authToken into preferences, set it for your requestInitializer
      * @param authToken
-     */
+     *
     void setAuthToken(String authToken) {
+    	Log.i("LOOK", "inside setAuthToken, is this necessary???");
     	SharedPreferences.Editor editor = settings.edit();
     	editor.putString(PREF_AUTH_TOKEN, authToken);
     	editor.commit();
     	requestInitializer.authToken = authToken;
-    }
+    }*/
     
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    	super.onActivityResult(requestCode, resultCode, data);
-    	Log.e("CHECK", "inside onActivityResult....");
-    	/*switch(requestCode) {
-    	case REQUEST_AUTHENTICATE:
-    		if(resultCode == RESULT_OK) {
-    			gotAccount();
-    		}
-    		else {
-    			chooseAccount();
-    		}
-    		break;
-    	}*/
-    }
     
     private Date getStartDate() {
     	Calendar now = Calendar.getInstance();
@@ -374,8 +361,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     	@Override
     	public void run() {
     		depth = 0;
-    		if(m_ProgressDialog != null)
-    			m_ProgressDialog.dismiss();
+    		if(mProgressDialog != null)
+    			mProgressDialog.dismiss();
         	currentMenu = "";
         	ArrayAdapter<String> options = new ArrayAdapter<String>(AnimeImportsAppActivity.this, R.layout.row_main_menu, optionsLinks);
         	setListAdapter(options);
@@ -405,108 +392,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     		mainLogo.setVisibility(View.GONE);
     		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
             setListAdapter(aiEventAdapter);
-    		m_ProgressDialog.dismiss();
+    		mProgressDialog.dismiss();
     		aiEventAdapter.notifyDataSetChanged();
     	}
     };
-   
-    public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
-    	private ArrayList<AIEventEntry> items;
-    	
-		public ArrayList<AIEventEntry> getItems() {
-			return items;
-		}
-
-		public AIEventAdapter(Context context, int textViewResourceId, ArrayList<AIEventEntry> items) {
-    		super(context, textViewResourceId, items);
-    		if(items.size() != 0) {
-	    		this.items = items;
-	    		if(!items.get(0).getName().equals("back")) {
-	    			AIEventEntry back = new AIEventEntry();
-	    			back.setName("back");
-	    			this.items.add(0, back);
-	    		}
-    		}
-    	}
-    	
-    	public View getView(int position, View convertView, ViewGroup parent) {
-    		View v = convertView;
-    		if(v == null) {
-    			LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    			v = vi.inflate(R.layout.row_event, null);
-    		}
-    		AIEventEntry event = items.get(position);
-    		TextView tt = (TextView) v.findViewById(R.id.toptext);
-			TextView bt = (TextView) v.findViewById(R.id.bottomtext);
-			ImageView icon = (ImageView) v.findViewById(R.id.icon);
-			
-    		if(event != null) {
-    			if(event.getName().equals("Back")) {
-    				icon.setVisibility(icon.GONE);
-    				if(tt != null) {
-	    				tt.setText(event.getName());
-	    			}
-	    			if(bt != null) {
-	    				bt.setVisibility(bt.GONE);
-	    			}
-    			}
-    			else {
-    				icon.setImageResource(getIcon(event.getName()));
-	    			if(tt != null) {
-	    				tt.setText(event.getName());
-	    			}
-	    			if(bt != null) {
-	    				bt.setText(event.getDate() + ", " + event.getTime());
-	    			}
-    			}
-    		}
-    		return v;
-    	}
-    }
-    
-    /**
-     * Returns the appropriate icon for the provided event
-     * Draft: return the latest (at the time) set's Common symbol
-     * FNM: return the latest (at the time) set's Uncommon symbol
-     * Release/PreRelease/Gameday: return the latest (at the time) set's Rare symbol
-     * GPT: return the latest (at the time) set's Mythic symbol
-     * @param input
-     * @return
-     */
-    private int getIcon(String input) {
-    	int retVal = R.drawable.icon;
-    	if(input.toLowerCase().contains("draft")) {
-    		retVal = R.drawable.icon_draft;
-    	}
-    	else if(input.toLowerCase().contains("hg")) {
-    		retVal = R.drawable.icon_2hg;
-    	}
-    	else if(input.toLowerCase().contains("sealed")) {
-    		retVal = R.drawable.icon_sealed;
-    	}
-    	else if(input.toLowerCase().contains("standard")) {
-    		retVal = R.drawable.icon_standard;
-    	}
-    	
-    	if(input.toLowerCase().contains("release") || input.toLowerCase().contains("prerelease") || 
-    		input.toLowerCase().contains("game day") || input.toLowerCase().contains("launch")) {
-    		retVal = R.drawable.icon_isd_rare;
-    	}
-    	
-    	if(input.toLowerCase().contains("gpt") ||
-    			input.toLowerCase().contains("grand prix")) {
-    		retVal = R.drawable.icon_isd_mythic;
-    	}
-    	
-    	if(input.toLowerCase().contains("edh")) {
-    		if(input.toLowerCase().contains("free play")) {
-    			retVal = R.drawable.icon_edh_common;
-    		}
-    		else {
-    			retVal = R.drawable.icon_edh_uncommon;
-    		}
-    	}
-    	
-    	return retVal;
-    }
 }

@@ -43,17 +43,12 @@ public final class R {
     }
     public static final class string {
         public static final int app_name=0x7f040000;
-        public static final int back=0x7f040006;
-        public static final int delete=0x7f040004;
-        public static final int main_header=0x7f040005;
-        public static final int new_calendar=0x7f040002;
-        public static final int store_address=0x7f040007;
-        public static final int store_email=0x7f040009;
-        public static final int store_hours=0x7f04000a;
-        public static final int store_number=0x7f040008;
-        public static final int store_url=0x7f04000c;
-        public static final int switch_account=0x7f040001;
-        public static final int update_title=0x7f040003;
-        public static final int version=0x7f04000b;
+        public static final int back=0x7f040002;
+        public static final int main_header=0x7f040001;
+        public static final int store_address=0x7f040003;
+        public static final int store_email=0x7f040005;
+        public static final int store_hours=0x7f040006;
+        public static final int store_number=0x7f040004;
+        public static final int store_url=0x7f040007;
     }
 }
