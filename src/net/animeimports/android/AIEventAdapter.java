@@ -23,7 +23,7 @@ public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
 		mContext = context;
 		if(items.size() != 0) {
     		this.items = items;
-    		if(!items.get(0).getName().equals("back")) {
+    		if(!items.get(0).getName().equalsIgnoreCase("back")) {
     			AIEventEntry back = new AIEventEntry();
     			back.setName("back");
     			this.items.add(0, back);
@@ -43,7 +43,7 @@ public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
 		ImageView icon = (ImageView) v.findViewById(R.id.icon);
 		
 		if(event != null) {
-			if(event.getName().equalsIgnoreCase("Back")) {
+			if(event.getName().equalsIgnoreCase("back")) {
 				icon.setVisibility(icon.GONE);
 				if(tt != null) {
     				tt.setText(event.getName());
@@ -100,7 +100,7 @@ public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
 			retVal = R.drawable.icon_isd_mythic;
 		}
 		
-		if(input.toLowerCase().contains("edh")) {
+		if(input.toLowerCase().contains("edh") || input.toLowerCase().contains("commander")) {
 			if(input.toLowerCase().contains("free play")) {
 				retVal = R.drawable.icon_edh_common;
 			}
