@@ -1,12 +1,22 @@
 package net.animeimports.android;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 import com.google.api.services.calendar.CalendarClient;
 import com.google.api.services.calendar.CalendarRequestInitializer;
@@ -40,6 +50,8 @@ import android.content.SharedPreferences;
 import net.animeimports.android.AIEventEntry;
 import net.animeimports.android.AIEventEntry.EVENT_TYPE;
 import net.animeimports.android.AIEventEntry.MTG_FORMAT;
+import net.animeimports.league.LeaguePlayer;
+import net.animeimports.league.XmlParser;
 
 public class AnimeImportsAppActivity extends ListActivity {
 	
@@ -63,6 +75,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private static final String UPCOMING_EVENTS = "Upcoming Events";
 	private static final String UPDATES = "Updates";
 	private static final String STORE = "Store";
+	private static final String LEAGUE_LEADERBOARD = "League Leaderboard";
 	
 	// Events / Lists
 	private List<String> optionsLinks = Lists.newArrayList();
@@ -75,6 +88,8 @@ public class AnimeImportsAppActivity extends ListActivity {
 	protected ProgressDialog mProgressDialog = null;
 	private ArrayList<AIEventEntry> events = null;
 	private ImageView mainLogo = null;
+	
+	private static ArrayList<LeaguePlayer> leagueStats = null;
 	
 	/**
 	 * Old code from GoogleCalendar Api examples, not entirely sure this is being used... 
@@ -151,6 +166,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     		optionsLinks.add(UPCOMING_EVENTS);
     		optionsLinks.add(STORE);
     		optionsLinks.add(STORE_INFO);
+    		optionsLinks.add(LEAGUE_LEADERBOARD);
     	}
     	
     	if(storeInfo.size() == 0) {
@@ -245,30 +261,11 @@ public class AnimeImportsAppActivity extends ListActivity {
 			else if(text.equals(STORE_INFO)) {
 				loadStoreInfo();
 			}
+			else if(text.equals(LEAGUE_LEADERBOARD)) {
+				getLeaderBoard();
+			}
     	}
     }
-   
-    /**
-     * Calls the eventFetchThread to query GoogleCalendar for events and loads a ProgressDialog
-     */
-    void getEvents() {
-		Thread thread = new Thread(null, eventFetchThread, "MagentoBackground");
-		thread.start();
-		mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
-    }
-
-    /**
-     * Write a new authToken into preferences, set it for your requestInitializer
-     * @param authToken
-     *
-    void setAuthToken(String authToken) {
-    	Log.i("LOOK", "inside setAuthToken, is this necessary???");
-    	SharedPreferences.Editor editor = settings.edit();
-    	editor.putString(PREF_AUTH_TOKEN, authToken);
-    	editor.commit();
-    	requestInitializer.authToken = authToken;
-    }*/
-    
     
     private Date getStartDate() {
     	Calendar now = Calendar.getInstance();
@@ -292,6 +289,69 @@ public class AnimeImportsAppActivity extends ListActivity {
 		endDate.setMinutes(now.get(Calendar.MINUTE));
 		endDate.setSeconds(now.get(Calendar.SECOND));
 		return endDate;
+    }
+    
+    private Runnable leagueFetchThread = new Runnable() {
+    	@Override
+    	public void run() {
+    		depth = 1;
+        	currentMenu = LEAGUE_LEADERBOARD;
+        	
+        	try {
+    	    	SAXParserFactory spf = SAXParserFactory.newInstance();
+    	    	SAXParser sp = spf.newSAXParser();
+    	    	XMLReader xr = sp.getXMLReader();
+    	    	URL sourceUrl = new URL("http://animeimports.net/league/MTGILEAGUE.xml");
+    	    	//URL sourceUrl = new URL("file:///Users/kurifuc4/Temp/league.xml");
+    	    	XmlParser handler = new XmlParser();
+    	    	xr.setContentHandler(handler);
+    	    	xr.parse(new InputSource(sourceUrl.openStream()));
+    	    	leagueStats = XmlParser.getStats();
+        	}
+        	catch (SAXException e) {
+        		e.printStackTrace();
+        	} catch (ParserConfigurationException e) {
+    			e.printStackTrace();
+    		} catch (MalformedURLException e) {
+    			e.printStackTrace();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+    		
+    		if(mProgressDialog != null)
+    			mProgressDialog.dismiss();
+    		runOnUiThread(loadLeaderBoardThread);
+    	}
+    };
+
+    void getLeaderBoard() {
+    	Thread thread = new Thread(null, leagueFetchThread, "MagentoBackground");
+    	thread.start();
+    	mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving leaderboard...");
+    }
+    
+    private Runnable loadLeaderBoardThread = new Runnable() {
+    	@Override
+    	public void run() {
+    		hideLogo();
+    		ArrayList<String> stats = new ArrayList<String>();
+        	for (LeaguePlayer p : leagueStats) {
+        		System.out.println("Player: " + p.getPlayerName() + ", Wins: " + p.getWins() + ", Losses: " + p.getLosses() + ", TotalPoints: " + p.getPointsLifetime() + ", SessionPoints: " + p.getPointsSession());
+        		stats.add(p.getPlayerName() + "\t" + p.getWins() + "-" + p.getLosses() + "\tSession: " + p.getPointsSession() + "\tLifetime: " + p.getPointsLifetime());
+        	}
+        	ArrayAdapter adapter = new ArrayAdapter(AnimeImportsAppActivity.this, R.layout.row_main_menu, stats);
+            setListAdapter(adapter);
+        	adapter.notifyDataSetChanged();
+    	}
+    };
+
+    /**
+     * Calls the eventFetchThread to query GoogleCalendar for events and loads a ProgressDialog
+     */
+    void getEvents() {
+		Thread thread = new Thread(null, eventFetchThread, "MagentoBackground");
+		thread.start();
+		mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
     }
     
     /**
@@ -398,8 +458,22 @@ public class AnimeImportsAppActivity extends ListActivity {
     		hideLogo();
     		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
             setListAdapter(aiEventAdapter);
-    		mProgressDialog.dismiss();
+            if(mProgressDialog != null)
+            	mProgressDialog.dismiss();
     		aiEventAdapter.notifyDataSetChanged();
     	}
     };
+    
+
+    /**
+     * Write a new authToken into preferences, set it for your requestInitializer
+     * @param authToken
+     *
+    void setAuthToken(String authToken) {
+    	Log.i("LOOK", "inside setAuthToken, is this necessary???");
+    	SharedPreferences.Editor editor = settings.edit();
+    	editor.putString(PREF_AUTH_TOKEN, authToken);
+    	editor.commit();
+    	requestInitializer.authToken = authToken;
+    }*/
 }
