@@ -46,11 +46,11 @@ public final class R {
     public static final class id {
         public static final int bottomtext=0x7f050007;
         public static final int icon=0x7f050005;
-        public static final int imageMainLogo=0x7f050000;
-        public static final int imgEvents=0x7f050003;
-        public static final int imgInfo=0x7f050002;
-        public static final int imgLeague=0x7f050004;
-        public static final int imgNews=0x7f050001;
+        public static final int imgEvents=0x7f050002;
+        public static final int imgInfo=0x7f050001;
+        public static final int imgLeague=0x7f050003;
+        public static final int imgLeagueSession=0x7f050004;
+        public static final int imgNews=0x7f050000;
         public static final int textView2=0x7f050008;
         public static final int toptext=0x7f050006;
     }

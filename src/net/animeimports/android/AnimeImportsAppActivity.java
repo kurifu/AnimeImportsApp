@@ -81,7 +81,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private AIEventAdapter aiEventAdapter;
 	private static final int DAYS_IN_FUTURE = 14;
 	
-	private static int depth = 0;
 	//private static String currentMenu = "";
 	private int currMenu = 0;
 	private final int UPDATES = 1;
@@ -93,7 +92,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	
 	protected ProgressDialog mProgressDialog = null;
 	private ArrayList<AIEventEntry> events = null;
-	private ImageView mainLogo = null;
 	
 	private static ArrayList<LeaguePlayer> leagueStats = null;
 	
@@ -142,19 +140,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        showLogo();
         initializeApp();
         runOnUiThread(loadMainMenuThread);
     }
-    
-    public void showLogo() {
-    	this.mainLogo = (ImageView) findViewById(R.id.imageMainLogo);
-    }
-    
-    public void hideLogo() {
-    	this.mainLogo.setVisibility(View.GONE);
-    }
-    
     
     /**
      * Initialize arrays and data members
@@ -174,9 +162,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     		optionsLinks.add(this.getString(R.string.menu_ladder_session));
     	}
     	
-    	//ImageView imgStore = (ImageView) findViewById(R.id.imgNews);
     	ImageView imgInfo = (ImageView) findViewById(R.id.imgInfo);
     	ImageView imgLeagueLifetime = (ImageView) findViewById(R.id.imgLeague);
+    	ImageView imgLeagueSession = (ImageView) findViewById(R.id.imgLeagueSession);
     	ImageView imgEvents = (ImageView) findViewById(R.id.imgEvents);
     	imgEvents.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
@@ -188,6 +176,12 @@ public class AnimeImportsAppActivity extends ListActivity {
     	    public void onClick(View v) {
     	    	currMenu = INFO;
     	    	loadStoreInfo();
+    	    }
+    	});
+    	imgLeagueSession.setOnClickListener(new OnClickListener() {
+    	    public void onClick(View v) {
+    	    	currMenu = LEAGUE_SESSION;
+    	    	getLeaderBoard();
     	    }
     	});
     	imgLeagueLifetime.setOnClickListener(new OnClickListener() {
@@ -202,8 +196,6 @@ public class AnimeImportsAppActivity extends ListActivity {
      * Populate the array adapter, hide the main logo
      */
     void loadStoreInfo() {
-    	depth = 1;
-
     	if(storeInfo.size() == 0) {
     		storeInfo.add("back");
     		storeInfo.add(this.getString(R.string.store_address));
@@ -214,7 +206,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     	
     	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
-    	hideLogo();
     }
     
     /**
@@ -222,7 +213,6 @@ public class AnimeImportsAppActivity extends ListActivity {
      * @param position
      */
     void handleEventClick(int position) {
-    	depth = 2;		
     	//currentMenu = UPCOMING_EVENTS;
 		ArrayList<String> eventDetails = Lists.newArrayList();
 		AIEventEntry event = aiEventAdapter.getItems().get(position);
@@ -240,58 +230,28 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     /**
-     * Handles all clicks for any menu depth using depth and position
-     * TODO: simplify, there has to be a better way
+     * Handles all clicks for any menu by looking at the currMenu member
      */
     protected void onListItemClick(ListView l, View v, int position, long id) {
-    	System.out.println("Depth is " + depth);
-    	// If this is not the main menu
-    	if(depth > 0) {
-    			// If back button was clicked, figure out which level we load
-    			if(position == 0) {
-    				if(depth == 1) {
-    					runOnUiThread(loadMainMenuThread);
-    				}
-    				else if(depth == 2) {
-    					getEvents();
-    				}
-    			}
-    			else if(position == 2) {
-					Log.i("DEBUG", "about to call");
-					Intent phoneIntent = new Intent(Intent.ACTION_CALL);
-					phoneIntent.setData(Uri.parse("tel:" + this.getString(R.string.store_number)));
-					startActivity(phoneIntent);
-    			}
-    			// Figure out which level we're on; Upcoming Events List or Store Info
-    			else if(depth == 1) {
-    				//if(currentMenu.equals(this.getString(R.string.menu_upcoming))) {
-    				//	handleEventClick(position);
-    				//}
-    			}
-    			else {
-    				// Event's details, not implemented yet
-    				Log.i("AI DEBUG", "Not implemented yet");
-    			}
-    	}
-    	// Otherwise this is the Main Menu
-    	else {
-	    	String text = (String)((TextView)v).getText();
-	    	if(text.equals(this.getString(R.string.menu_updates))) {
-	    		
-	    	}
-	    	else if(text.equals(this.getString(R.string.menu_upcoming))) {
-	    		getEvents();
-	    	}
-			else if(text.equals(this.getString(R.string.menu_store))) {
-				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(this.getString(R.string.store_url)));
-				startActivity(browserIntent);
-			}
-			else if(text.equals(this.getString(R.string.menu_info))) {
-				loadStoreInfo();
-			}
-			else if(text.equals(this.getString(R.string.menu_ladder_lifetime))) {
-				getLeaderBoard();
-			}
+    	Log.i("DEBUG", "onListItemClick, menu is " + currMenu + ", position is " + position);
+    	switch(currMenu) {
+    	case UPDATES:
+    		break;
+    	case EVENTS:
+    		handleEventClick(position);
+    		break;
+    	case INFO:
+    		if(position == 2) {
+    			Log.i("DEBUG", "about to call");
+    			Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+    			phoneIntent.setData(Uri.parse("tel:" + this.getString(R.string.store_number)));
+    			startActivity(phoneIntent);
+    		}
+    		break;
+    	case LEAGUE_LIFETIME:
+    		break;
+    	default:
+    		Log.i("DEBUG", "Nothing to see here");
     	}
     }
     
@@ -322,7 +282,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Runnable leagueLifetimeFetchThread = new Runnable() {
     	@Override
     	public void run() {
-    		depth = 1;
         	if(leagueStats == null) {
 	        	try {
 	    	    	SAXParserFactory spf = SAXParserFactory.newInstance();
@@ -369,7 +328,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Runnable loadLeague = new Runnable() {
     	@Override
     	public void run() {
-    		hideLogo();
     		ArrayList<String> stats = new ArrayList<String>();
     		
     		if(currMenu == LEAGUE_SESSION) {
@@ -409,7 +367,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Runnable eventFetchThread = new Runnable() {
 		@Override
 		public void run() {
-	    	depth = 1;
 	    	//currentMenu = UPCOMING_EVENTS;
 	    	events = new ArrayList<AIEventEntry>();
 	    	
@@ -474,13 +431,11 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Runnable loadMainMenuThread = new Runnable() {
     	@Override
     	public void run() {
-    		depth = 0;
     		if(mProgressDialog != null)
     			mProgressDialog.dismiss();
         	//currentMenu = "";
         	ArrayAdapter<String> options = new ArrayAdapter<String>(AnimeImportsAppActivity.this, R.layout.row_main_menu, optionsLinks);
         	setListAdapter(options);
-        	showLogo();
     	}
     };
     
@@ -503,7 +458,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Runnable loadEventsThread = new Runnable() {
     	@Override
     	public void run() {
-    		hideLogo();
     		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
             setListAdapter(aiEventAdapter);
             if(mProgressDialog != null)
@@ -511,17 +465,4 @@ public class AnimeImportsAppActivity extends ListActivity {
     		aiEventAdapter.notifyDataSetChanged();
     	}
     };
-    
-
-    /**
-     * Write a new authToken into preferences, set it for your requestInitializer
-     * @param authToken
-     *
-    void setAuthToken(String authToken) {
-    	Log.i("LOOK", "inside setAuthToken, is this necessary???");
-    	SharedPreferences.Editor editor = settings.edit();
-    	editor.putString(PREF_AUTH_TOKEN, authToken);
-    	editor.commit();
-    	requestInitializer.authToken = authToken;
-    }*/
 }
