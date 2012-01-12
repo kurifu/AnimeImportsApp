@@ -8,4 +8,10 @@
     <string name="store_email">webmaster@animeimports.net</string>
     <string name="store_hours">1:00pm - 7:00pm everyday</string>
     <string name="store_url">http://www.animeimports.net</string>
+    <string name="menu_updates">Updates</string>
+    <string name="menu_upcoming">Upcoming Events</string>
+    <string name="menu_store">Store</string>
+    <string name="menu_info">Store Info</string>
+    <string name="menu_ladder_lifetime">Ladder Lifetime</string>
+    <string name="menu_ladder_session">Ladder Session</string>
 </resources>

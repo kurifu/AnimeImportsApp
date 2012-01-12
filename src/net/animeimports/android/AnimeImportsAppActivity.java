@@ -6,7 +6,9 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -38,9 +40,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.app.ListActivity;
@@ -51,6 +55,7 @@ import net.animeimports.android.AIEventEntry;
 import net.animeimports.android.AIEventEntry.EVENT_TYPE;
 import net.animeimports.android.AIEventEntry.MTG_FORMAT;
 import net.animeimports.league.LeaguePlayer;
+import net.animeimports.league.LeaguePlayerComparator;
 import net.animeimports.league.XmlParser;
 
 public class AnimeImportsAppActivity extends ListActivity {
@@ -70,13 +75,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	CalendarClient client;
 	CalendarAndroidRequestInitializer requestInitializer;
 	
-	// Menu related 
-	private static final String STORE_INFO = "Store Info";
-	private static final String UPCOMING_EVENTS = "Upcoming Events";
-	private static final String UPDATES = "Updates";
-	private static final String STORE = "Store";
-	private static final String LEAGUE_LEADERBOARD = "League Leaderboard";
-	
 	// Events / Lists
 	private List<String> optionsLinks = Lists.newArrayList();
 	private List<String> storeInfo = Lists.newArrayList();
@@ -84,7 +82,15 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private static final int DAYS_IN_FUTURE = 14;
 	
 	private static int depth = 0;
-	private static String currentMenu = "";
+	//private static String currentMenu = "";
+	private int currMenu = 0;
+	private final int UPDATES = 1;
+	private final int EVENTS = 2;
+	private final int STORE = 3;
+	private final int INFO = 4;
+	private final int LEAGUE_SESSION = 5;
+	private final int LEAGUE_LIFETIME = 6;
+	
 	protected ProgressDialog mProgressDialog = null;
 	private ArrayList<AIEventEntry> events = null;
 	private ImageView mainLogo = null;
@@ -148,7 +154,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     public void hideLogo() {
     	this.mainLogo.setVisibility(View.GONE);
     }
-
+    
+    
     /**
      * Initialize arrays and data members
      */
@@ -158,24 +165,37 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    settings = this.getSharedPreferences(PREF, 0);
 	    requestInitializer = new CalendarAndroidRequestInitializer();
 	    client = new CalendarClient(requestInitializer.createRequestFactory());
-	    //client.setPrettyPrint(true);
-	    //client.setApplicationName("AnimeImportsCalendarApp");
 	    
     	if(optionsLinks.size() == 0) {
-    		optionsLinks.add(UPDATES);
-    		optionsLinks.add(UPCOMING_EVENTS);
-    		optionsLinks.add(STORE);
-    		optionsLinks.add(STORE_INFO);
-    		optionsLinks.add(LEAGUE_LEADERBOARD);
+    		optionsLinks.add(this.getString(R.string.menu_updates));
+    		optionsLinks.add(this.getString(R.string.menu_upcoming));
+    		optionsLinks.add(this.getString(R.string.menu_store));
+    		optionsLinks.add(this.getString(R.string.menu_info));
+    		optionsLinks.add(this.getString(R.string.menu_ladder_session));
     	}
     	
-    	if(storeInfo.size() == 0) {
-    		storeInfo.add("back");
-    		storeInfo.add(this.getString(R.string.store_address));
-    		storeInfo.add(this.getString(R.string.store_number));
-    		storeInfo.add(this.getString(R.string.store_email));
-    		storeInfo.add(this.getString(R.string.store_hours));
-    	}
+    	//ImageView imgStore = (ImageView) findViewById(R.id.imgNews);
+    	ImageView imgInfo = (ImageView) findViewById(R.id.imgInfo);
+    	ImageView imgLeagueLifetime = (ImageView) findViewById(R.id.imgLeague);
+    	ImageView imgEvents = (ImageView) findViewById(R.id.imgEvents);
+    	imgEvents.setOnClickListener(new OnClickListener() {
+    	    public void onClick(View v) {
+    	    	currMenu = EVENTS;
+    	    	getEvents();
+    	    }
+    	});
+    	imgInfo.setOnClickListener(new OnClickListener() {
+    	    public void onClick(View v) {
+    	    	currMenu = INFO;
+    	    	loadStoreInfo();
+    	    }
+    	});
+    	imgLeagueLifetime.setOnClickListener(new OnClickListener() {
+    	    public void onClick(View v) {
+    	    	currMenu = LEAGUE_LIFETIME;
+    	    	getLeaderBoard();
+    	    }
+    	});
     }
     
     /**
@@ -183,7 +203,15 @@ public class AnimeImportsAppActivity extends ListActivity {
      */
     void loadStoreInfo() {
     	depth = 1;
-    	currentMenu = STORE_INFO;
+
+    	if(storeInfo.size() == 0) {
+    		storeInfo.add("back");
+    		storeInfo.add(this.getString(R.string.store_address));
+    		storeInfo.add(this.getString(R.string.store_number));
+    		storeInfo.add(this.getString(R.string.store_email));
+    		storeInfo.add(this.getString(R.string.store_hours));
+    	}
+    	
     	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
     	hideLogo();
@@ -195,7 +223,7 @@ public class AnimeImportsAppActivity extends ListActivity {
      */
     void handleEventClick(int position) {
     	depth = 2;		
-    	currentMenu = UPCOMING_EVENTS;
+    	//currentMenu = UPCOMING_EVENTS;
 		ArrayList<String> eventDetails = Lists.newArrayList();
 		AIEventEntry event = aiEventAdapter.getItems().get(position);
 		
@@ -236,9 +264,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     			}
     			// Figure out which level we're on; Upcoming Events List or Store Info
     			else if(depth == 1) {
-    				if(currentMenu.equals(UPCOMING_EVENTS)) {
-    					handleEventClick(position);
-    				}
+    				//if(currentMenu.equals(this.getString(R.string.menu_upcoming))) {
+    				//	handleEventClick(position);
+    				//}
     			}
     			else {
     				// Event's details, not implemented yet
@@ -248,20 +276,20 @@ public class AnimeImportsAppActivity extends ListActivity {
     	// Otherwise this is the Main Menu
     	else {
 	    	String text = (String)((TextView)v).getText();
-	    	if(text.equals(UPDATES)) {
+	    	if(text.equals(this.getString(R.string.menu_updates))) {
 	    		
 	    	}
-	    	else if(text.equals(UPCOMING_EVENTS)) {
+	    	else if(text.equals(this.getString(R.string.menu_upcoming))) {
 	    		getEvents();
 	    	}
-			else if(text.equals(STORE)) {
+			else if(text.equals(this.getString(R.string.menu_store))) {
 				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(this.getString(R.string.store_url)));
 				startActivity(browserIntent);
 			}
-			else if(text.equals(STORE_INFO)) {
+			else if(text.equals(this.getString(R.string.menu_info))) {
 				loadStoreInfo();
 			}
-			else if(text.equals(LEAGUE_LEADERBOARD)) {
+			else if(text.equals(this.getString(R.string.menu_ladder_lifetime))) {
 				getLeaderBoard();
 			}
     	}
@@ -291,54 +319,74 @@ public class AnimeImportsAppActivity extends ListActivity {
 		return endDate;
     }
     
-    private Runnable leagueFetchThread = new Runnable() {
+    private Runnable leagueLifetimeFetchThread = new Runnable() {
     	@Override
     	public void run() {
     		depth = 1;
-        	currentMenu = LEAGUE_LEADERBOARD;
-        	
-        	try {
-    	    	SAXParserFactory spf = SAXParserFactory.newInstance();
-    	    	SAXParser sp = spf.newSAXParser();
-    	    	XMLReader xr = sp.getXMLReader();
-    	    	URL sourceUrl = new URL("http://animeimports.net/league/MTGILEAGUE.xml");
-    	    	//URL sourceUrl = new URL("file:///Users/kurifuc4/Temp/league.xml");
-    	    	XmlParser handler = new XmlParser();
-    	    	xr.setContentHandler(handler);
-    	    	xr.parse(new InputSource(sourceUrl.openStream()));
-    	    	leagueStats = XmlParser.getStats();
+        	if(leagueStats == null) {
+	        	try {
+	    	    	SAXParserFactory spf = SAXParserFactory.newInstance();
+	    	    	SAXParser sp = spf.newSAXParser();
+	    	    	XMLReader xr = sp.getXMLReader();
+	    	    	URL sourceUrl = new URL("http://animeimports.net/league/MTGILEAGUE.xml");
+	    	    	XmlParser handler = new XmlParser();
+	    	    	xr.setContentHandler(handler);
+	    	    	xr.parse(new InputSource(sourceUrl.openStream()));
+	    	    	leagueStats = XmlParser.getStats();
+	        	}
+	        	catch (SAXException e) {
+	        		e.printStackTrace();
+	        	} 
+	        	catch (ParserConfigurationException e) {
+	    			e.printStackTrace();
+	    		} 
+	        	catch (MalformedURLException e) {
+	    			e.printStackTrace();
+	    		} 
+	        	catch (UnknownHostException e) {
+	        		runOnUiThread(recoverThread);
+		    		runOnUiThread(loadMainMenuThread);
+		    		return;
+	        	}
+	        	catch (IOException e) {
+	    			e.printStackTrace();
+	    		}
         	}
-        	catch (SAXException e) {
-        		e.printStackTrace();
-        	} catch (ParserConfigurationException e) {
-    			e.printStackTrace();
-    		} catch (MalformedURLException e) {
-    			e.printStackTrace();
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    		
+        	
     		if(mProgressDialog != null)
     			mProgressDialog.dismiss();
-    		runOnUiThread(loadLeaderBoardThread);
+    		runOnUiThread(loadLeague);
     	}
     };
 
     void getLeaderBoard() {
-    	Thread thread = new Thread(null, leagueFetchThread, "MagentoBackground");
+    	if(leagueStats == null)
+    		mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving leaderboard...");
+    	Thread thread = new Thread(null, leagueLifetimeFetchThread, "MagentoBackground");
     	thread.start();
-    	mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving leaderboard...");
     }
     
-    private Runnable loadLeaderBoardThread = new Runnable() {
+    private Runnable loadLeague = new Runnable() {
     	@Override
     	public void run() {
     		hideLogo();
     		ArrayList<String> stats = new ArrayList<String>();
-        	for (LeaguePlayer p : leagueStats) {
-        		System.out.println("Player: " + p.getPlayerName() + ", Wins: " + p.getWins() + ", Losses: " + p.getLosses() + ", TotalPoints: " + p.getPointsLifetime() + ", SessionPoints: " + p.getPointsSession());
-        		stats.add(p.getPlayerName() + "\t" + p.getWins() + "-" + p.getLosses() + "\tSession: " + p.getPointsSession() + "\tLifetime: " + p.getPointsLifetime());
-        	}
+    		
+    		if(currMenu == LEAGUE_SESSION) {
+    			Collections.sort(leagueStats, new LeaguePlayerComparator(1));
+	        	for (LeaguePlayer p : leagueStats) {
+	        		if(p.getPointsSession() != 0)
+	        			stats.add(p.getPlayerName() + ":\t" + p.getPointsSession());
+	        	}
+    		}
+    		else if(currMenu == LEAGUE_LIFETIME) {
+    			Collections.sort(leagueStats, new LeaguePlayerComparator(0));
+	        	for (LeaguePlayer p : leagueStats) {
+	        		if(p.getPointsLifetime() != 0)
+	        			stats.add(p.getPlayerName() + ":\t" + p.getPointsLifetime());
+	        	}
+    		}
+        	
         	ArrayAdapter adapter = new ArrayAdapter(AnimeImportsAppActivity.this, R.layout.row_main_menu, stats);
             setListAdapter(adapter);
         	adapter.notifyDataSetChanged();
@@ -349,9 +397,9 @@ public class AnimeImportsAppActivity extends ListActivity {
      * Calls the eventFetchThread to query GoogleCalendar for events and loads a ProgressDialog
      */
     void getEvents() {
+    	mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
 		Thread thread = new Thread(null, eventFetchThread, "MagentoBackground");
 		thread.start();
-		mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
     }
     
     /**
@@ -362,7 +410,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		@Override
 		public void run() {
 	    	depth = 1;
-	    	currentMenu = UPCOMING_EVENTS;
+	    	//currentMenu = UPCOMING_EVENTS;
 	    	events = new ArrayList<AIEventEntry>();
 	    	
 	    	try {
@@ -429,7 +477,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     		depth = 0;
     		if(mProgressDialog != null)
     			mProgressDialog.dismiss();
-        	currentMenu = "";
+        	//currentMenu = "";
         	ArrayAdapter<String> options = new ArrayAdapter<String>(AnimeImportsAppActivity.this, R.layout.row_main_menu, optionsLinks);
         	setListAdapter(options);
         	showLogo();

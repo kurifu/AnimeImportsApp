@@ -18,6 +18,14 @@
         	android:layout_weight="1" 
         	android:id="@+id/android:list" 
         	android:layout_gravity="center_horizontal"></ListView>
-    
+        	
+    	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    	android:layout_width="fill_parent"
+	    	android:layout_height="60dip" android:paddingTop="3dip">
+    		<ImageButton android:background="@null" android:layout_height="wrap_content" android:layout_width="wrap_content" android:src="@drawable/news1" android:layout_marginLeft="10dip" android:id="@+id/imgNews"></ImageButton>
+    		<ImageButton android:background="@null" android:layout_height="wrap_content" android:layout_width="wrap_content" android:src="@drawable/ic_info_on" android:layout_marginLeft="10dip" android:id="@+id/imgInfo"></ImageButton>
+    		<ImageButton android:background="@null" android:layout_height="wrap_content" android:layout_width="wrap_content" android:src="@drawable/ic_events_on" android:layout_marginLeft="10dip" android:id="@+id/imgEvents"></ImageButton>
+    		<ImageButton android:background="@null" android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_marginLeft="10dip" android:src="@drawable/ic_league_on" android:id="@+id/imgLeague"></ImageButton>
+    	</LinearLayout>
     </LinearLayout>
 </RelativeLayout>
