@@ -76,7 +76,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	CalendarAndroidRequestInitializer requestInitializer;
 	
 	// Events / Lists
-	private List<String> optionsLinks = Lists.newArrayList();
+	//private List<String> optionsLinks = Lists.newArrayList();
 	private List<String> storeInfo = Lists.newArrayList();
 	private AIEventAdapter aiEventAdapter;
 	private static final int DAYS_IN_FUTURE = 14;
@@ -94,6 +94,13 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private ArrayList<AIEventEntry> events = null;
 	
 	private static ArrayList<LeaguePlayer> leagueStats = null;
+	private static ArrayList<String> updates = null;
+	
+	ImageView imgInfo = null;
+	ImageView imgLeagueLifetime = null;
+	ImageView imgLeagueSession = null;
+	ImageView imgEvents = null;
+	ImageView imgNews = null;
 	
 	/**
 	 * Old code from GoogleCalendar Api examples, not entirely sure this is being used... 
@@ -141,7 +148,38 @@ public class AnimeImportsAppActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         initializeApp();
-        runOnUiThread(loadMainMenuThread);
+        //runOnUiThread(loadMainMenuThread);
+        loadNews();
+    }
+    
+    /**
+     * Toggles between an icon's on and off state
+     * @param currIcon
+     */
+    private void swapIcons(int currIcon) {
+    	imgInfo.setImageResource(R.drawable.ic_info_off);
+    	imgLeagueLifetime.setImageResource(R.drawable.ic_league_off);
+    	imgLeagueSession.setImageResource(R.drawable.ic_session_off);
+    	imgEvents.setImageResource(R.drawable.ic_events_off);
+    	switch(currIcon) {
+    	case UPDATES:
+    		imgNews.setImageResource(R.drawable.ic_news_on);
+    		break;
+    	case EVENTS:
+    		imgEvents.setImageResource(R.drawable.ic_events_on);
+    		break;
+    	case INFO:
+    		imgInfo.setImageResource(R.drawable.ic_info_on);
+    		break;
+    	case LEAGUE_SESSION:
+    		imgLeagueSession.setImageResource(R.drawable.ic_session_on);
+    		break;
+    	case LEAGUE_LIFETIME:
+    		imgLeagueLifetime.setImageResource(R.drawable.ic_league_on);
+    		break;
+    	default:
+    		break;
+    	}
     }
     
     /**
@@ -154,38 +192,43 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    requestInitializer = new CalendarAndroidRequestInitializer();
 	    client = new CalendarClient(requestInitializer.createRequestFactory());
 	    
-    	if(optionsLinks.size() == 0) {
-    		optionsLinks.add(this.getString(R.string.menu_updates));
-    		optionsLinks.add(this.getString(R.string.menu_upcoming));
-    		optionsLinks.add(this.getString(R.string.menu_store));
-    		optionsLinks.add(this.getString(R.string.menu_info));
-    		optionsLinks.add(this.getString(R.string.menu_ladder_session));
-    	}
+    	imgInfo = (ImageView) findViewById(R.id.imgInfo);
+    	imgLeagueLifetime = (ImageView) findViewById(R.id.imgLeague);
+    	imgLeagueSession = (ImageView) findViewById(R.id.imgLeagueSession);
+    	imgEvents = (ImageView) findViewById(R.id.imgEvents);
+    	imgNews = (ImageView) findViewById(R.id.imgNews);
     	
-    	ImageView imgInfo = (ImageView) findViewById(R.id.imgInfo);
-    	ImageView imgLeagueLifetime = (ImageView) findViewById(R.id.imgLeague);
-    	ImageView imgLeagueSession = (ImageView) findViewById(R.id.imgLeagueSession);
-    	ImageView imgEvents = (ImageView) findViewById(R.id.imgEvents);
     	imgEvents.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
+    	    	swapIcons(EVENTS);
+    	    	currMenu = EVENTS;
+    	    	getEvents();
+    	    }
+    	});
+    	imgEvents.setOnClickListener(new OnClickListener() {
+    	    public void onClick(View v) {
+    	    	swapIcons(EVENTS);
     	    	currMenu = EVENTS;
     	    	getEvents();
     	    }
     	});
     	imgInfo.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
+    	    	swapIcons(INFO);
     	    	currMenu = INFO;
     	    	loadStoreInfo();
     	    }
     	});
     	imgLeagueSession.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
+    	    	swapIcons(LEAGUE_SESSION);
     	    	currMenu = LEAGUE_SESSION;
     	    	getLeaderBoard();
     	    }
     	});
     	imgLeagueLifetime.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
+    	    	swapIcons(LEAGUE_LIFETIME);
     	    	currMenu = LEAGUE_LIFETIME;
     	    	getLeaderBoard();
     	    }
@@ -195,7 +238,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     /**
      * Populate the array adapter, hide the main logo
      */
-    void loadStoreInfo() {
+    private void loadStoreInfo() {
     	if(storeInfo.size() == 0) {
     		storeInfo.add("back");
     		storeInfo.add(this.getString(R.string.store_address));
@@ -206,6 +249,14 @@ public class AnimeImportsAppActivity extends ListActivity {
     	
     	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
+    }
+    
+    private void loadNews() {
+    	if(updates == null)
+    		updates = new ArrayList<String>();
+    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.row_main_menu, updates);
+    	setListAdapter(adapter);
+    	
     }
     
     /**
@@ -304,7 +355,8 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    		} 
 	        	catch (UnknownHostException e) {
 	        		runOnUiThread(recoverThread);
-		    		runOnUiThread(loadMainMenuThread);
+	        		loadNews();
+		    		//runOnUiThread(loadMainMenuThread);
 		    		return;
 	        	}
 	        	catch (IOException e) {
@@ -409,12 +461,14 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    	}
 	    	catch(UnknownHostException e) {
 	    		runOnUiThread(recoverThread);
-	    		runOnUiThread(loadMainMenuThread);
+	    		//runOnUiThread(loadMainMenuThread);
+	    		loadNews();
 	    		return;
 	    	}
 	    	catch(SocketTimeoutException e) {
 	    		runOnUiThread(recoverThread);
-	    		runOnUiThread(loadMainMenuThread);
+	    		//runOnUiThread(loadMainMenuThread);
+	    		loadNews();
 	    	}
 	    	catch(IOException e) {
 	    		System.out.println("IOException yo");
@@ -428,7 +482,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	/**
 	 * Loads the main menu, called when we have an UnknownHostException or SocketTimeoutException
 	 */
-    private Runnable loadMainMenuThread = new Runnable() {
+    /*private Runnable loadMainMenuThread = new Runnable() {
     	@Override
     	public void run() {
     		if(mProgressDialog != null)
@@ -437,7 +491,7 @@ public class AnimeImportsAppActivity extends ListActivity {
         	ArrayAdapter<String> options = new ArrayAdapter<String>(AnimeImportsAppActivity.this, R.layout.row_main_menu, optionsLinks);
         	setListAdapter(options);
     	}
-    };
+    };*/
     
     /**
      * Called when we encounter an exception; alert the user and load the main menu
