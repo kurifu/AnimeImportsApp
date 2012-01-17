@@ -7,22 +7,77 @@
     
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     	android:layout_width="fill_parent"
-    	android:layout_height="fill_parent" android:orientation="vertical">
+    	android:layout_height="fill_parent" 
+    	android:orientation="vertical">
+
+    	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    	android:layout_width="fill_parent"
+	    	android:layout_height="25dip" 
+	    	android:paddingTop="3dip"
+	    	android:paddingBottom="3dip"
+	    	android:orientation="horizontal">
+	    <TextView android:layout_column="0"
+	    	android:text="@string/league_name"
+	    	android:layout_width="125dip"
+	    	android:layout_height="wrap_content"
+	    	android:gravity="center_horizontal"/>
+	    <TextView android:layout_column="1"
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"
+	    	android:layout_weight=".3"
+	    	android:gravity="center_horizontal" 
+	    	android:text="@string/league_session"/>
+	    <TextView android:layout_column="2"
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"
+	    	android:layout_weight=".2"
+	    	android:gravity="center_horizontal" 
+	    	android:text="@string/league_lifetime"/>
+    	</LinearLayout>
+    	
+    	<View android:layout_height="2dip"
+    		android:layout_width="fill_parent"
+	    	android:background="#FF909090"/>
+    	
         <ListView android:drawSelectorOnTop="false" 
         	android:layout_width="fill_parent" 
         	android:layout_height="fill_parent" 
         	android:layout_weight="1" 
         	android:id="@+id/android:list" 
-        	android:layout_gravity="center_horizontal"></ListView>
-        	
+        	android:layout_gravity="center_horizontal"/>
+			
+       	<View android:layout_height="2dip"
+       		android:layout_width="fill_parent"
+       		android:background="#FF909090" />
     	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	    	android:layout_width="fill_parent"
-	    	android:layout_height="60dip" android:paddingTop="3dip">
-    		<ImageButton android:background="@null" android:layout_height="wrap_content" android:layout_width="wrap_content" android:src="@drawable/news1" android:layout_marginLeft="10dip" android:id="@+id/imgNews"></ImageButton>
-    		<ImageButton android:background="@null" android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_marginLeft="10dip" android:id="@+id/imgInfo" android:src="@drawable/ic_info_off"></ImageButton>
-    		<ImageButton android:background="@null" android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_marginLeft="10dip" android:id="@+id/imgEvents" android:src="@drawable/ic_events_off"></ImageButton>
-    		<ImageButton android:background="@null" android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_marginLeft="10dip" android:id="@+id/imgLeague" android:src="@drawable/ic_league_off"></ImageButton>
-    		<ImageButton android:background="@null" android:src="@drawable/ic_session_off" android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_marginLeft="10dip" android:id="@+id/imgLeagueSession"></ImageButton>
+	    	android:layout_height="60dip" 
+	    	android:paddingTop="3dip"
+	    	android:orientation="horizontal">
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content" 
+    			android:src="@drawable/news1" 
+    			android:id="@+id/imgNews"/>
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content"
+    			android:id="@+id/imgInfo" 
+    			android:src="@drawable/ic_info_off"/>
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content"
+    			android:id="@+id/imgEvents" 
+    			android:src="@drawable/ic_events_off"/>
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content"
+    			android:id="@+id/imgLeague" 
+    			android:src="@drawable/ic_league_off"/>
     	</LinearLayout>
     </LinearLayout>
 </RelativeLayout>

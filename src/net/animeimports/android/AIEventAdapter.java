@@ -23,11 +23,6 @@ public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
 		mContext = context;
 		if(items.size() != 0) {
     		this.items = items;
-    		if(!items.get(0).getName().equals("back")) {
-    			AIEventEntry back = new AIEventEntry();
-    			back.setName("back");
-    			this.items.add(0, back);
-    		}
 		}
 	}
 	
@@ -43,23 +38,12 @@ public class AIEventAdapter extends ArrayAdapter<AIEventEntry> {
 		ImageView icon = (ImageView) v.findViewById(R.id.icon);
 		
 		if(event != null) {
-			if(event.getName().equalsIgnoreCase("Back")) {
-				icon.setVisibility(icon.GONE);
-				if(tt != null) {
-    				tt.setText(event.getName());
-    			}
-    			if(bt != null) {
-    				bt.setVisibility(bt.GONE);
-    			}
+			icon.setImageResource(getIcon(event.getName()));
+			if(tt != null) {
+				tt.setText(event.getName());
 			}
-			else {
-				icon.setImageResource(getIcon(event.getName()));
-    			if(tt != null) {
-    				tt.setText(event.getName());
-    			}
-    			if(bt != null) {
-    				bt.setText(event.getDate() + ", " + event.getTime());
-    			}
+			if(bt != null) {
+				bt.setText(event.getDate() + ", " + event.getTime());
 			}
 		}
 		return v;

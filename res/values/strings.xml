@@ -1,17 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AnimeImportsApp</string>
-    <string name="main_header">Anime Imports\nUpcoming Events</string>
-    <string name="back">back</string>
     <string name="store_address">1305 Palmetto Ave  Suite C\nPacifica, CA 94044</string>
     <string name="store_number">(650) 488-7900</string>
     <string name="store_email">webmaster@animeimports.net</string>
     <string name="store_hours">1:00pm - 7:00pm everyday</string>
     <string name="store_url">http://www.animeimports.net</string>
-    <string name="menu_updates">Updates</string>
-    <string name="menu_upcoming">Upcoming Events</string>
-    <string name="menu_store">Store</string>
-    <string name="menu_info">Store Info</string>
-    <string name="menu_ladder_lifetime">Ladder Lifetime</string>
-    <string name="menu_ladder_session">Ladder Session</string>
+    <string name="league_session">Session</string>
+    <string name="league_lifetime">Lifetime</string>
+    <string name="league_name">Name</string>
 </resources>
