@@ -7,17 +7,85 @@
     
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     	android:layout_width="fill_parent"
-    	android:layout_height="fill_parent" android:orientation="vertical">
-        <ImageView android:layout_height="wrap_content" 
-        	android:layout_width="wrap_content" 
-        	android:src="@drawable/logo2" 
-        	android:layout_gravity="center_horizontal" android:id="@+id/imageMainLogo"></ImageView>
+    	android:layout_height="fill_parent" 
+    	android:orientation="vertical">
+
+    	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    		android:id="@+id/llLeagueHead"
+	    	android:layout_width="fill_parent"
+	    	android:layout_height="40dip" 
+	    	android:paddingTop="3dip"
+	    	android:paddingBottom="3dip"
+	    	android:orientation="horizontal"
+	    	android:visibility="gone"
+	    	android:layout_gravity="center">
+	    <TextView android:layout_column="0"
+	    	android:id="@+id/tvNameHeader"
+	    	android:text="@string/league_name"
+	    	android:layout_width="100dip"
+	    	android:layout_height="wrap_content"
+	    	android:gravity="center"
+	    	android:textAppearance="?android:attr/textAppearanceLarge"/>
+	    <TextView android:layout_column="1"
+	    	android:id="@+id/tvSessionHeader"
+	    	android:text="@string/league_session"
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"
+	    	android:layout_weight=".3"
+	    	android:gravity="center"
+	    	android:textAppearance="?android:attr/textAppearanceLarge"/>
+	    <TextView android:layout_column="2"
+	    	android:id="@+id/tvLifetimeHeader"
+	    	android:text="@string/league_lifetime"
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"
+	    	android:layout_weight=".2"
+	    	android:gravity="center"
+	    	android:textAppearance="?android:attr/textAppearanceLarge"/>
+    	</LinearLayout>
+    	
+    	<View android:layout_height="2dip"
+    		android:layout_width="fill_parent"
+	    	android:background="#FF909090"/>
+    	
         <ListView android:drawSelectorOnTop="false" 
         	android:layout_width="fill_parent" 
         	android:layout_height="fill_parent" 
         	android:layout_weight="1" 
         	android:id="@+id/android:list" 
-        	android:layout_gravity="center_horizontal"></ListView>
-    
+        	android:layout_gravity="center_horizontal"/>
+			
+       	<View android:layout_height="2dip"
+       		android:layout_width="fill_parent"
+       		android:background="#FF909090" />
+    	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    	android:layout_width="fill_parent"
+	    	android:layout_height="60dip" 
+	    	android:paddingTop="3dip"
+	    	android:orientation="horizontal">
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content" 
+    			android:id="@+id/imgNews" android:src="@drawable/ic_news_off"/>
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content"
+    			android:id="@+id/imgInfo" 
+    			android:src="@drawable/ic_info_off"/>
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content"
+    			android:id="@+id/imgEvents" 
+    			android:src="@drawable/ic_events_off"/>
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content"
+    			android:id="@+id/imgLeague" 
+    			android:src="@drawable/ic_league_off"/>
+    	</LinearLayout>
     </LinearLayout>
 </RelativeLayout>
