@@ -1,7 +1,8 @@
-package net.animeimports.android;
+package net.animeimports.league;
 
 import java.util.ArrayList;
 
+import net.animeimports.android.R;
 import net.animeimports.league.LeaguePlayer;
 
 import android.content.Context;
