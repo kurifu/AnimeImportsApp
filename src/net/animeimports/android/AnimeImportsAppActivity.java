@@ -42,7 +42,9 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.app.ListActivity;
 import android.content.Context;
@@ -99,6 +101,10 @@ public class AnimeImportsAppActivity extends ListActivity {
 	ImageView imgLeagueLifetime = null;
 	ImageView imgEvents = null;
 	ImageView imgNews = null;
+	LinearLayout leagueHeader = null;
+	TextView tvNameHeader = null;
+	TextView tvSessionHeader = null;
+	TextView tvLifetimeHeader = null;
 	
 	/**
 	 * Old code from GoogleCalendar Api examples, not entirely sure this is being used... 
@@ -146,19 +152,25 @@ public class AnimeImportsAppActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         initializeApp();
-        //runOnUiThread(loadMainMenuThread);
-        loadNews();
+    }
+    
+    private void toggleLeagHeader() {
+    	if(currMenu == LEAGUE_LIFETIME)
+    		leagueHeader.setVisibility(View.VISIBLE);
+    	else
+    		leagueHeader.setVisibility(View.GONE);
     }
     
     /**
      * Toggles between an icon's on and off state
      * @param currIcon
      */
-    private void swapIcons(int currIcon) {
+    private void swapIcons() {
     	imgInfo.setImageResource(R.drawable.ic_info_off);
     	imgLeagueLifetime.setImageResource(R.drawable.ic_league_off);
     	imgEvents.setImageResource(R.drawable.ic_events_off);
-    	switch(currIcon) {
+    	imgNews.setImageResource(R.drawable.ic_news_off);
+    	switch(currMenu) {
     	case NEWS:
     		imgNews.setImageResource(R.drawable.ic_news_on);
     		break;
@@ -190,34 +202,74 @@ public class AnimeImportsAppActivity extends ListActivity {
     	imgLeagueLifetime = (ImageView) findViewById(R.id.imgLeague);
     	imgEvents = (ImageView) findViewById(R.id.imgEvents);
     	imgNews = (ImageView) findViewById(R.id.imgNews);
+    	leagueHeader = (LinearLayout) findViewById(R.id.llLeagueHead);
+    	tvNameHeader = (TextView) findViewById(R.id.tvNameHeader);
+    	tvSessionHeader = (TextView) findViewById(R.id.tvSessionHeader);
+    	tvLifetimeHeader = (TextView) findViewById(R.id.tvLifetimeHeader);
+    	
+    	currMenu = NEWS;
+    	swapIcons();
+    	loadNews();
     	
     	imgNews.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
-    	    	swapIcons(NEWS);
     	    	currMenu = NEWS;
+    	    	swapIcons();
+    	    	toggleLeagHeader();
     	    	loadNews();
     	    }
     	});
     	imgEvents.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
-    	    	swapIcons(EVENTS);
     	    	currMenu = EVENTS;
+    	    	swapIcons();
     	    	getEvents();
     	    }
     	});
     	imgInfo.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
-    	    	swapIcons(INFO);
     	    	currMenu = INFO;
+    	    	swapIcons();
+    	    	toggleLeagHeader();
     	    	loadStoreInfo();
     	    }
     	});
     	imgLeagueLifetime.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
-    	    	swapIcons(LEAGUE_LIFETIME);
     	    	currMenu = LEAGUE_LIFETIME;
+    	    	swapIcons();
     	    	getLeaderBoard();
     	    }
+    	});
+    	tvNameHeader.setOnClickListener(new OnClickListener() {
+    		public void onClick(View v) {
+    			if(leagueStats != null) {
+    				Collections.sort(leagueStats, new LeaguePlayerComparator(1));
+    				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
+    				setListAdapter(adapter);
+    				adapter.notifyDataSetChanged();
+    			}
+    		}
+    	});
+    	tvSessionHeader.setOnClickListener(new OnClickListener() {
+    		public void onClick(View v) {
+    			if(leagueStats != null) {
+    				Collections.sort(leagueStats, new LeaguePlayerComparator(2));
+    				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
+    				setListAdapter(adapter);
+    				adapter.notifyDataSetChanged();
+    			}
+    		}
+    	});
+    	tvLifetimeHeader.setOnClickListener(new OnClickListener() {
+    		public void onClick(View v) {
+    			if(leagueStats != null) {
+    				Collections.sort(leagueStats, new LeaguePlayerComparator(3));
+    				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
+    				setListAdapter(adapter);
+    				adapter.notifyDataSetChanged();
+    			}
+    		}
     	});
     }
     
@@ -347,6 +399,9 @@ public class AnimeImportsAppActivity extends ListActivity {
 	        	catch (IOException e) {
 	    			e.printStackTrace();
 	    		}
+	        	/*catch(HttpException e) {
+	        		
+	        	}*/
         	}
         	
     		if(mProgressDialog != null)
@@ -377,6 +432,7 @@ public class AnimeImportsAppActivity extends ListActivity {
             if(mProgressDialog != null)
             	mProgressDialog.dismiss();
     		adapter.notifyDataSetChanged();
+    		toggleLeagHeader();
     	}
     };
 
@@ -477,6 +533,7 @@ public class AnimeImportsAppActivity extends ListActivity {
             if(mProgressDialog != null)
             	mProgressDialog.dismiss();
     		aiEventAdapter.notifyDataSetChanged();
+    		toggleLeagHeader();
     	}
     };
 }
