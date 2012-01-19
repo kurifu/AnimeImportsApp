@@ -1,4 +1,4 @@
-package net.animeimports.android;
+package net.animeimports.calendar;
 
 import com.google.api.client.googleapis.GoogleUrl;
 import com.google.api.client.util.DateTime;

@@ -1,4 +1,4 @@
-package net.animeimports.android;
+package net.animeimports.calendar;
 
 public class AIEventEntry {
 	private String name;

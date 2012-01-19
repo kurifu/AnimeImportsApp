@@ -1,6 +1,8 @@
-package net.animeimports.android;
+package net.animeimports.calendar;
 
 import java.util.ArrayList;
+
+import net.animeimports.android.R;
 
 import android.content.Context;
 import android.view.LayoutInflater;
