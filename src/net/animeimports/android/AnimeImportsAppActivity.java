@@ -37,6 +37,7 @@ import com.google.common.collect.Lists;
 import android.app.ProgressDialog;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -90,24 +91,28 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private final int LEAGUE_LIFETIME = 6;
 	
 	protected ProgressDialog mProgressDialog = null;
-	private ArrayList<AIEventEntry> events = null;
-	
-	private static final String URL_LEAGUE = "http://animeimports.net/league/MTGILEAGUE.xml";
+	private static ArrayList<AIEventEntry> events = null;
 	private static ArrayList<LeaguePlayer> leagueStats = null;
 	private static ArrayList<String> updates = null;
+	
+	private static final String URL_LEAGUE = "http://animeimports.net/league/MTGILEAGUE.xml";
+	
 	private int leagueSort = 0;
 	private final int SORT_NAME = 1;
 	private final int SORT_SESSION = 2;
 	private final int SORT_LIFETIME = 3;
 	
 	ImageView imgInfo = null;
-	ImageView imgLeagueLifetime = null;
+	ImageView imgLeague = null;
 	ImageView imgEvents = null;
 	ImageView imgNews = null;
 	LinearLayout leagueHeader = null;
 	TextView tvNameHeader = null;
 	TextView tvSessionHeader = null;
 	TextView tvLifetimeHeader = null;
+	
+	private DataManager dm = null;
+	private Time lastLeagueFetch = null;
 	
 	/**
 	 * Old code from GoogleCalendar Api examples, not entirely sure this is being used... 
@@ -166,9 +171,10 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    settings = this.getSharedPreferences(PREF, 0);
 	    requestInitializer = new CalendarAndroidRequestInitializer();
 	    client = new CalendarClient(requestInitializer.createRequestFactory());
+	    dm = DataManager.getInstance(this);
 	    
     	imgInfo = (ImageView) findViewById(R.id.imgInfo);
-    	imgLeagueLifetime = (ImageView) findViewById(R.id.imgLeague);
+    	imgLeague = (ImageView) findViewById(R.id.imgLeague);
     	imgEvents = (ImageView) findViewById(R.id.imgEvents);
     	imgNews = (ImageView) findViewById(R.id.imgNews);
     	leagueHeader = (LinearLayout) findViewById(R.id.llLeagueHead);
@@ -203,7 +209,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	    	loadStoreInfo();
     	    }
     	});
-    	imgLeagueLifetime.setOnClickListener(new OnClickListener() {
+    	imgLeague.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
     	    	currMenu = LEAGUE_LIFETIME;
     	    	swapIcons();
@@ -255,7 +261,7 @@ public class AnimeImportsAppActivity extends ListActivity {
      */
     private void swapIcons() {
     	imgInfo.setImageResource(R.drawable.ic_info_off);
-    	imgLeagueLifetime.setImageResource(R.drawable.ic_league_off);
+    	imgLeague.setImageResource(R.drawable.ic_league_off);
     	imgEvents.setImageResource(R.drawable.ic_events_off);
     	imgNews.setImageResource(R.drawable.ic_news_off);
     	switch(currMenu) {
@@ -269,7 +275,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     		imgInfo.setImageResource(R.drawable.ic_info_on);
     		break;
     	case LEAGUE_LIFETIME:
-    		imgLeagueLifetime.setImageResource(R.drawable.ic_league_on);
+    		imgLeague.setImageResource(R.drawable.ic_league_on);
     		break;
     	default:
     		break;
@@ -346,9 +352,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 		return endDate;
     }
     
-    /**
-     * Populate the array adapter
-     */
     private void loadStoreInfo() {
     	if(storeInfo.size() == 0) {
     		storeInfo.add(this.getString(R.string.store_address));
@@ -370,12 +373,54 @@ public class AnimeImportsAppActivity extends ListActivity {
     	adapter.notifyDataSetChanged();
     }
 
+    /**
+     * Calls the leagueFetchThread to fetch statistics from outside ONLY if we were just loaded into memory.
+     * TODO: add a manual fetch of some sort
+     * TODO: add db caching
+     */
     void getLeague() {
-    	if(leagueStats == null)
+    	if(leagueStats == null || okToFetch() ) {
+    		System.out.println("ok to fetch!");
     		mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving leaderboard...");
-    	Thread thread = new Thread(null, leagueFetchThread, "MagentoBackground");
-    	thread.start();
+	    	Thread thread = new Thread(null, leagueFetchThread, "LeagueFetchThread");
+	    	thread.start();
+	    	lastLeagueFetch = new Time();
+	    	lastLeagueFetch.setToNow();
+    	}
+    	else {
+    		System.out.println("not ok to fetch, hitting db");
+    		mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving db...");
+    		Thread t = new Thread(null, leagueDbFetchThread, "LeagueDbFetchThread");
+    		t.start();
+    	}
     }
+    
+    /**
+     * Return whether it's ok to fetch new data (if it's been 1 hour since the last fetch)
+     * @return
+     */
+    private Boolean okToFetch() {
+    	Time now = new Time();
+    	now.setToNow();
+    	if(now.hour - lastLeagueFetch.hour >= 1 && now.after(lastLeagueFetch)) {
+    		System.out.println("It's ok to fetch!");
+    		return true;
+    	}
+    	else {
+    		System.out.println("NOT ok to fetch!");
+    		return false;
+    	}
+    }
+    
+    private Runnable leagueDbFetchThread = new Runnable() {
+		@Override
+		public void run() {
+			leagueStats = (ArrayList<LeaguePlayer>)dm.selectAll();
+			if(mProgressDialog != null)
+				mProgressDialog.dismiss();
+			runOnUiThread(loadLeagueThread);
+		}
+    };
     
     private Runnable leagueFetchThread = new Runnable() {
     	@Override
@@ -402,18 +447,38 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    		} 
 	        	catch (UnknownHostException e) {
 	        		runOnUiThread(recoverThread);
-	        		loadNews();
-		    		//runOnUiThread(loadMainMenuThread);
+	        		Thread t = new Thread(null, leagueDbFetchThread, "LeagueDbFetchThread");
+	        		t.start();
 		    		return;
 	        	}
 	        	catch (IOException e) {
 	    			e.printStackTrace();
 	    		}
-	        	/*catch(HttpException e) {
-	        		
-	        	}*/
         	}
-        	
+    		
+    		if(mProgressDialog != null)
+    			mProgressDialog.dismiss();
+    		
+    		if(leagueStats != null) {
+    			Thread sl = new Thread(null, storeLeague, "StoreLeagueThread");
+    			sl.start();
+    		}
+    	}
+    };
+    
+    /**
+     * Throw away stale data, store new results
+     */
+    private Runnable storeLeague = new Runnable() {
+    	@Override
+    	public void run() {
+    		dm.deleteAll();
+    		
+    		for (LeaguePlayer p : leagueStats) {
+    			dm.insert(p.getPlayerName(), p.getPointsSession(), p.getPointsLifetime());
+    			System.out.println("Storing Name: " + p.getPlayerName() + ", Session: " + p.getPointsSession() + ", Lifetime: " + p.getPointsLifetime());
+    		}
+    		
     		if(mProgressDialog != null)
     			mProgressDialog.dismiss();
     		runOnUiThread(loadLeagueThread);
@@ -428,7 +493,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    			Collections.sort(leagueStats, new LeaguePlayerComparator(2));
 	    		else if(leagueSort == SORT_LIFETIME)
 	    			Collections.sort(leagueStats, new LeaguePlayerComparator(3));
-	    		else // default: sort on name(leagueSort == SORT_NAME)
+	    		else 
 	    			Collections.sort(leagueStats, new LeaguePlayerComparator(1));
 	    		
 	    		AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
@@ -533,7 +598,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     };
     
     /**
-     * Called when we encounter an exception; alert the user and load the main menu
+     * Called when we encounter an exception (usually some kind of connection issue)
+     * Alert the user via Toast
      */
     private Runnable recoverThread = new Runnable() {
     	@Override
