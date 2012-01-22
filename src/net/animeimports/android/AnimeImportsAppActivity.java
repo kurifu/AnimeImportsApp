@@ -44,6 +44,7 @@ import android.content.Context;
 import android.content.Intent;
 import net.animeimports.calendar.AICalendarManager;
 import net.animeimports.calendar.AICalendarManager.CalendarAndroidRequestInitializer;
+import android.graphics.Color;
 import net.animeimports.calendar.AIEventAdapter;
 import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.calendar.AIEventEntry.EVENT_TYPE;
@@ -157,6 +158,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	tvNameHeader.setOnClickListener(new OnClickListener() {
     		public void onClick(View v) {
     			if(leagueStats != null) {
+    				tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+    				tvSessionHeader.setTextColor(Color.WHITE);
+    				tvLifetimeHeader.setTextColor(Color.WHITE);
     				Collections.sort(leagueStats, new LeaguePlayerComparator(1));
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
@@ -167,6 +171,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	tvSessionHeader.setOnClickListener(new OnClickListener() {
     		public void onClick(View v) {
     			if(leagueStats != null) {
+    				tvNameHeader.setTextColor(Color.WHITE);
+    				tvSessionHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+    				tvLifetimeHeader.setTextColor(Color.WHITE);
     				Collections.sort(leagueStats, new LeaguePlayerComparator(2));
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
@@ -177,6 +184,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	tvLifetimeHeader.setOnClickListener(new OnClickListener() {
     		public void onClick(View v) {
     			if(leagueStats != null) {
+    				tvNameHeader.setTextColor(Color.WHITE);
+    				tvSessionHeader.setTextColor(Color.WHITE);
+    				tvLifetimeHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
     				Collections.sort(leagueStats, new LeaguePlayerComparator(3));
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
@@ -351,6 +361,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	            setListAdapter(adapter);
 	            if(mProgressDialog != null)
 	            	mProgressDialog.dismiss();
+	            tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
 	    		adapter.notifyDataSetChanged();
 	    		toggleLeagHeader();
     		}
