@@ -415,7 +415,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Runnable leagueDbFetchThread = new Runnable() {
 		@Override
 		public void run() {
-			leagueStats = (ArrayList<LeaguePlayer>)dm.selectAll();
+			leagueStats = (ArrayList<LeaguePlayer>)dm.selectAllLeague();
 			if(mProgressDialog != null)
 				mProgressDialog.dismiss();
 			runOnUiThread(loadLeagueThread);
@@ -472,10 +472,10 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Runnable storeLeague = new Runnable() {
     	@Override
     	public void run() {
-    		dm.deleteAll();
+    		dm.deleteAllLeague();
     		
     		for (LeaguePlayer p : leagueStats) {
-    			dm.insert(p.getPlayerName(), p.getPointsSession(), p.getPointsLifetime());
+    			dm.insertLeague(p.getPlayerName(), p.getPointsSession(), p.getPointsLifetime());
     			System.out.println("Storing Name: " + p.getPlayerName() + ", Session: " + p.getPointsSession() + ", Lifetime: " + p.getPointsLifetime());
     		}
     		
