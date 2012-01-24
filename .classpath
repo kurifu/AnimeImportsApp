@@ -3,13 +3,14 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="lib" path="./lib/google-api-client-1.5.0-beta.jar"/>
-	<classpathentry kind="lib" path="./lib/google-api-client-extensions-android2-1.5.0-beta.jar"/>
-	<classpathentry kind="lib" path="./lib/google-http-client-1.5.0-beta.jar"/>
-	<classpathentry kind="lib" path="./lib/google-http-client-1.5.0-beta-sources.jar"/>
-	<classpathentry kind="lib" path="./lib/google-http-client-extensions-android2-1.5.0-beta.jar"/>
-	<classpathentry kind="lib" path="./lib/guava-r09.jar"/>
-	<classpathentry kind="lib" path="./lib/shared-sample-calendar-v2-1.0.0.jar"/>
-	<classpathentry kind="lib" path="./lib/shared-sample-gdata-1.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/google-api-client-1.5.0-beta.jar"/>
+	<classpathentry kind="lib" path="lib/google-api-client-extensions-android2-1.5.0-beta.jar"/>
+	<classpathentry kind="lib" path="lib/google-http-client-1.5.0-beta.jar"/>
+	<classpathentry kind="lib" path="lib/google-http-client-1.5.0-beta-sources.jar"/>
+	<classpathentry kind="lib" path="lib/google-http-client-extensions-android2-1.5.0-beta.jar"/>
+	<classpathentry kind="lib" path="lib/guava-r09.jar"/>
+	<classpathentry kind="lib" path="lib/shared-sample-calendar-v2-1.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/shared-sample-gdata-1.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/twitter4j-core-android-2.2.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

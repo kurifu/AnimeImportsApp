@@ -15,6 +15,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.http.conn.ConnectTimeoutException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -54,6 +55,7 @@ import net.animeimports.league.AILeagueAdapter;
 import net.animeimports.league.LeaguePlayer;
 import net.animeimports.league.LeaguePlayerComparator;
 import net.animeimports.league.XmlParser;
+import net.animeimports.news.AINewsManager;
 
 public class AnimeImportsAppActivity extends ListActivity {
 	
@@ -123,14 +125,14 @@ public class AnimeImportsAppActivity extends ListActivity {
     	
     	currMenu = NEWS;
     	swapIcons();
-    	loadNews();
+    	getNews();
     	
     	imgNews.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
     	    	currMenu = NEWS;
     	    	swapIcons();
     	    	toggleLeagHeader();
-    	    	loadNews();
+    	    	getNews();
     	    }
     	});
     	imgEvents.setOnClickListener(new OnClickListener() {
@@ -292,13 +294,32 @@ public class AnimeImportsAppActivity extends ListActivity {
     	storeInfoAdapter.notifyDataSetChanged();
     }
     
-    private void loadNews() {
-    	if(updates == null)
-    		updates = new ArrayList<String>();
-    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.row_main_menu, updates);
-    	setListAdapter(adapter);
-    	adapter.notifyDataSetChanged();
+    private void getNews() {
+    	mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving news feed...", true);
+    	//runOnUiThread(loadNews);
+    	Thread newsThread = new Thread(null, newsFetchThread, "loadNewsThread");
+    	newsThread.start();
     }
+    
+    private Runnable newsFetchThread = new Runnable() {
+    	@Override
+    	public void run() {
+    		AINewsManager nManager = AINewsManager.getInstance();
+    		updates = nManager.getItems();
+    		runOnUiThread(loadNewsThread);
+    	}
+    };
+    
+    private Runnable loadNewsThread = new Runnable() {
+    	@Override
+    	public void run() {
+	    	if(mProgressDialog != null)
+				mProgressDialog.dismiss();
+	    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.row_main_menu, updates);
+	    	setListAdapter(adapter);
+	    	adapter.notifyDataSetChanged();
+    	}
+    };
 
     void getLeague() {
     	if(leagueStats == null)
@@ -332,7 +353,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    		} 
 	        	catch (UnknownHostException e) {
 	        		runOnUiThread(recoverThread);
-	        		loadNews();
+	        		getNews();
 		    		return;
 	        	}
 	        	catch (IOException e) {
@@ -428,18 +449,24 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    	}
 	    	catch(UnknownHostException e) {
 	    		runOnUiThread(recoverThread);
-	    		loadNews();
+	    		getNews();
 	    		return;
 	    	}
 	    	catch(SocketTimeoutException e) {
 	    		runOnUiThread(recoverThread);
-	    		loadNews();
+	    		getNews();
+	    		return;
+	    	}
+	    	catch(ConnectTimeoutException e) {
+	    		runOnUiThread(recoverThread);
+	    		getNews();
 	    		return;
 	    	}
 	    	catch(IOException e) {
 	    		System.out.println("IOException yo");
 	    		e.printStackTrace();
 	    	}
+	    	
 	    	
 	    	runOnUiThread(loadEventsThread);
 		}
@@ -463,7 +490,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     /**
      * Called when we encounter an exception; alert the user and load the main menu
      */
-    private Runnable recoverThread = new Runnable() {
+    public Runnable recoverThread = new Runnable() {
     	@Override
     	public void run() {
     		Context context = getApplicationContext();
