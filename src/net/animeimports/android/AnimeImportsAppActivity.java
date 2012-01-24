@@ -484,6 +484,22 @@ public class AnimeImportsAppActivity extends ListActivity {
     		runOnUiThread(loadLeagueThread);
     	}
     };
+    
+    private Runnable storeEvents = new Runnable() {
+    	@Override
+    	public void run() {
+    		dm.deleteAllEvents();
+    		
+    		for(AIEventEntry e : events) {
+    			dm.insertEvents(e.getName(), e.getDate(), e.getEventType().getIntValue(), e.getMtgFormat().getIntValue(), e.getMtgEventType().getIntValue(), e.getSummary());
+    			System.out.println("Storing name: " + e.getName() + ", Date: " + e.getDate() + ", EventType: " + e.getEventType().getIntValue() + " etc");
+    		}
+    		
+    		if(mProgressDialog != null)
+    			mProgressDialog.dismiss();
+    		//runOnUiThread(); TODO: call newsFetchThread, get updated code from news branch
+    	}
+    };
 
     private Runnable loadLeagueThread = new Runnable() {
     	@Override

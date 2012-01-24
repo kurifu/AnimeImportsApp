@@ -10,15 +10,78 @@ public class AIEventEntry {
 	private String summary;
 	
 	public enum EVENT_TYPE {
-		MTG, WARHAMMER 
+		MTG(0), 
+		WARHAMMER(1);
+		private int value;
+		private EVENT_TYPE(int value) {
+			this.value = value;
+		}
+		public static EVENT_TYPE getValue(int n) {
+			switch(n) {
+			case 0:
+				return EVENT_TYPE.MTG;
+			case 1:
+				return EVENT_TYPE.WARHAMMER;
+			default: return null;
+			}
+		}
+		public int getIntValue() {
+			return value;
+		}
 	}
 	
 	public enum MTG_FORMAT {
-		DRAFT, SEALED, MINIMASTER, STANDARD, EXTENDED, MODERN, LEGACY, VINTAGE   
+		DRAFT(0), 
+		SEALED(1), 
+		MINIMASTER(2), 
+		STANDARD(3), 
+		EXTENDED(4), 
+		MODERN(5), 
+		LEGACY(6), 
+		VINTAGE(7);
+		private int value;
+		private MTG_FORMAT(int n) {
+			this.value = n;
+		}
+		public static MTG_FORMAT getValue(int n) {
+			switch(n) {
+			case 0:	return MTG_FORMAT.DRAFT;
+			case 1: return MTG_FORMAT.SEALED;
+			case 2: return MTG_FORMAT.MINIMASTER;
+			case 3: return MTG_FORMAT.STANDARD;
+			case 4: return MTG_FORMAT.EXTENDED;
+			case 5: return MTG_FORMAT.MODERN;
+			case 6: return MTG_FORMAT.LEGACY;
+			case 7: return MTG_FORMAT.VINTAGE;
+			default: return null;
+			}
+		}
+		public int getIntValue() {
+			return value;
+		}
 	}
 	
 	public enum MTG_EVENT_TYPE {
-		PRERELEASE, RELEASE, GPT, GAMEDAY
+		PRERELEASE(0), 
+		RELEASE(1), 
+		GPT(2), 
+		GAMEDAY(3);
+		private int value;
+		private MTG_EVENT_TYPE(int n) {
+			this.value = n;
+		}
+		public static MTG_EVENT_TYPE getValue(int n) {
+			switch(n) {
+			case 0: return MTG_EVENT_TYPE.PRERELEASE;
+			case 1: return MTG_EVENT_TYPE.RELEASE;
+			case 2: return MTG_EVENT_TYPE.GPT;
+			case 3: return MTG_EVENT_TYPE.GAMEDAY;
+			default: return null;
+			}
+		}
+		public int getIntValue() {
+			return value;
+		}
 	}
 	
 	/**

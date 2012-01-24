@@ -3,6 +3,7 @@ package net.animeimports.android;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.league.LeaguePlayer;
 
 import android.content.Context;
@@ -24,6 +25,8 @@ public class DataManager {
 	private static final String INSERT_LEAGUE = "insert into " + LEAGUE_TABLE_NAME + "(name, pointsSession, pointsLifetime) values (?, ?, ?)";
 	private static final String INSERT_EVENTS = "insert into " + EVENTS_TABLE_NAME + "(name, date, eventType, mtgFormat, mtgEventType, summary) values (?, ?, ?, ?, ?, ?)";
 	private static DataManager dm = null;
+	ArrayList<LeaguePlayer> leagueList = null;
+	ArrayList<AIEventEntry> eventsList = null;
 	
 	public static DataManager getInstance(Context context) {
 		if(dm == null)
@@ -58,12 +61,18 @@ public class DataManager {
 	
 	// TODO: not sure if this should be public
 	public void deleteAllLeague() {
-		Log.i("DEBUG", "inside deleteAll");
+		Log.i("DEBUG", "inside deleteAllLeague");
 		this.db.delete(LEAGUE_TABLE_NAME, null, null);
 	}
 	
-	public List<LeaguePlayer> selectAllLeague() {
-		List<LeaguePlayer> list = new ArrayList<LeaguePlayer>();
+	// TODO: not sure if this should be public
+	public void deleteAllEvents() {
+		Log.i("DEBUG", "inside deleteAllEvents");
+		this.db.delete(EVENTS_TABLE_NAME, null, null);
+	}
+	
+	public ArrayList<LeaguePlayer> selectAllLeague() {
+		leagueList = new ArrayList<LeaguePlayer>();
 		Cursor cursor = this.db.query(LEAGUE_TABLE_NAME, new String[] {"name", "pointsSession", "pointsLifetime"}, null, null, null, null, "name desc");
 		if(cursor.moveToFirst()) {
 			while(cursor.moveToNext()) {
@@ -71,13 +80,35 @@ public class DataManager {
 				p.setPlayerName(cursor.getString(0));
 				p.setPointsSession(cursor.getInt(1));
 				p.setPointsLifetime(cursor.getInt(2));
-				list.add(p);
+				leagueList.add(p);
 			}
 		}
 		if(cursor != null && !cursor.isClosed()) {
 			cursor.close();
 		}
-		return list;
+		return leagueList;
+	}
+	
+	//String name, String date, int eventType, int mtgFormat, int mtgEventType, String summary) {
+	public ArrayList<AIEventEntry> selectAllEvents() {
+		eventsList = new ArrayList<AIEventEntry>();
+		Cursor cursor = this.db.query(EVENTS_TABLE_NAME, new String[] {}, null, null, null, null, "date asc");
+		if(cursor.moveToFirst()) {
+			while(cursor.moveToNext()) {
+				AIEventEntry e = new AIEventEntry();
+				e.setName(cursor.getString(0));
+				e.setDate(cursor.getString(1));
+				e.setEventType(AIEventEntry.EVENT_TYPE.getValue(cursor.getInt(2)));
+				e.setMtgFormat(AIEventEntry.MTG_FORMAT.getValue(cursor.getInt(3)));
+				e.setMtgEventType(AIEventEntry.MTG_EVENT_TYPE.getValue(cursor.getInt(4)));
+				e.setSummary(cursor.getString(5));
+			}
+		}
+		
+		if(cursor != null && !cursor.isClosed()) {
+			cursor.close();
+		}
+		return eventsList;
 	}
 	
 	private static class DataOpenHelper extends SQLiteOpenHelper {
