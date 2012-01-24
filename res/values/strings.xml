@@ -9,6 +9,6 @@
     <string name="league_session">Session</string>
     <string name="league_lifetime">Lifetime</string>
     <string name="league_name">Name</string>
-    <color name="tv_highlight">#ff00ffff</color>
+    <color name="tv_highlight">#0099CC</color>
     <color name="tv_normal">#ffffffff</color>
 </resources>

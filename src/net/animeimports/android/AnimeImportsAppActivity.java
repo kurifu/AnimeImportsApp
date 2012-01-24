@@ -15,22 +15,16 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.http.conn.ConnectTimeoutException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import com.google.api.services.calendar.CalendarClient;
-import com.google.api.services.calendar.CalendarRequestInitializer;
 import com.google.api.services.calendar.CalendarUrl;
 import com.google.api.services.calendar.model.EventEntry;
 import com.google.api.services.calendar.model.EventFeed;
-import com.google.api.client.extensions.android2.AndroidHttp;
-import com.google.api.client.googleapis.GoogleHeaders;
-import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.util.DateTime;
 import com.google.common.collect.Lists;
 
@@ -50,7 +44,9 @@ import android.widget.Toast;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import net.animeimports.calendar.AICalendarManager;
+import net.animeimports.calendar.AICalendarManager.CalendarAndroidRequestInitializer;
+import android.graphics.Color;
 import net.animeimports.calendar.AIEventAdapter;
 import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.calendar.AIEventEntry.EVENT_TYPE;
@@ -60,28 +56,16 @@ import net.animeimports.league.AILeagueAdapter;
 import net.animeimports.league.LeaguePlayer;
 import net.animeimports.league.LeaguePlayerComparator;
 import net.animeimports.league.XmlParser;
+import net.animeimports.news.AINewsManager;
 
 public class AnimeImportsAppActivity extends ListActivity {
 	
-	// GoogleCalendar
-	private static final String TAG = "CalendarSample";
-	final HttpTransport transport = AndroidHttp.newCompatibleTransport();
-	static final String PREF = TAG;
-	static final String PREF_ACCOUNT_NAME = "accountName";
-	static final String PREF_AUTH_TOKEN = "authToken";
-	static final String PREF_GSESSIONID = "gsessionid";
-	GoogleAccountManager accountManager;
-	HttpRequestFactory requestFactory;
-	SharedPreferences settings;
-	String accountName;
-	String authToken;
 	CalendarClient client;
 	CalendarAndroidRequestInitializer requestInitializer;
 	
 	// Events / Lists
 	private List<String> storeInfo = Lists.newArrayList();
 	private AIEventAdapter aiEventAdapter;
-	private static final int DAYS_IN_FUTURE = 14;
 	
 	private int currMenu = 0;
 	private final int NEWS = 1;
@@ -113,44 +97,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	
 	private DataManager dm = null;
 	private Time lastLeagueFetch = null;
-	
-	/**
-	 * Old code from GoogleCalendar Api examples, not entirely sure this is being used... 
-	 * TODO: flag for delete
-	 */
- 	public class CalendarAndroidRequestInitializer extends CalendarRequestInitializer {
-		String authToken;
-		
-		public CalendarAndroidRequestInitializer() {
-			super(transport);
-			authToken = settings.getString(PREF_AUTH_TOKEN, null);
-			setGsessionid(settings.getString(PREF_GSESSIONID, null));
-		}
-		
-		public void intercept(HttpRequest request) throws IOException {
-			super.intercept(request);
-			request.getHeaders().setAuthorization(GoogleHeaders.getGoogleLoginValue(authToken));
-		}
-
-		public boolean handleResponse(HttpRequest request, HttpResponse response, boolean retrySupported) throws IOException {
-			switch(response.getStatusCode()) {
-				case 302:
-					super.handleResponse(request, response, retrySupported);
-					SharedPreferences.Editor editor = settings.edit();
-					editor.putString(PREF_GSESSIONID, getGsessionid());
-					editor.commit();
-					return true;
-				case 401:
-					accountManager.invalidateAuthToken(authToken);
-					authToken = null;
-					SharedPreferences.Editor editor2 = settings.edit();
-					editor2.remove(PREF_AUTH_TOKEN);
-					editor2.commit();
-					return false;
-			}
-			return false;
-		}
-	}
+	AICalendarManager cManager = null;
 	
     /**
      *  Called when the activity is first created. 
@@ -167,9 +114,8 @@ public class AnimeImportsAppActivity extends ListActivity {
      */
     public void initializeApp() {
     	events = new ArrayList<AIEventEntry>();
-		accountManager = new GoogleAccountManager(this);
-	    settings = this.getSharedPreferences(PREF, 0);
-	    requestInitializer = new CalendarAndroidRequestInitializer();
+	    cManager = AICalendarManager.getInstance(getApplicationContext());
+	    requestInitializer = cManager.getCalReqInitializer();
 	    client = new CalendarClient(requestInitializer.createRequestFactory());
 	    dm = DataManager.getInstance(this);
 	    
@@ -184,14 +130,14 @@ public class AnimeImportsAppActivity extends ListActivity {
     	
     	currMenu = NEWS;
     	swapIcons();
-    	loadNews();
+    	getNews();
     	
     	imgNews.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
     	    	currMenu = NEWS;
     	    	swapIcons();
     	    	toggleLeagHeader();
-    	    	loadNews();
+    	    	getNews();
     	    }
     	});
     	imgEvents.setOnClickListener(new OnClickListener() {
@@ -219,6 +165,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	tvNameHeader.setOnClickListener(new OnClickListener() {
     		public void onClick(View v) {
     			if(leagueStats != null) {
+    				tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+    				tvSessionHeader.setTextColor(Color.WHITE);
+    				tvLifetimeHeader.setTextColor(Color.WHITE);
     				Collections.sort(leagueStats, new LeaguePlayerComparator(1));
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
@@ -229,6 +178,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	tvSessionHeader.setOnClickListener(new OnClickListener() {
     		public void onClick(View v) {
     			if(leagueStats != null) {
+    				tvNameHeader.setTextColor(Color.WHITE);
+    				tvSessionHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+    				tvLifetimeHeader.setTextColor(Color.WHITE);
     				Collections.sort(leagueStats, new LeaguePlayerComparator(2));
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
@@ -239,6 +191,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	tvLifetimeHeader.setOnClickListener(new OnClickListener() {
     		public void onClick(View v) {
     			if(leagueStats != null) {
+    				tvNameHeader.setTextColor(Color.WHITE);
+    				tvSessionHeader.setTextColor(Color.WHITE);
+    				tvLifetimeHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
     				Collections.sort(leagueStats, new LeaguePlayerComparator(3));
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
@@ -328,30 +283,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     	}
     }
     
-    private Date getStartDate() {
-    	Calendar now = Calendar.getInstance();
-    	Date startDate = new Date();
-		startDate.setYear(now.get(Calendar.YEAR)-1900);
-		startDate.setMonth(now.get(Calendar.MONTH));
-		startDate.setDate(now.get(Calendar.DATE));
-		startDate.setHours(now.get(Calendar.HOUR));
-		startDate.setMinutes(now.get(Calendar.MINUTE));
-		startDate.setSeconds(now.get(Calendar.SECOND));
-		return startDate;
-    }
-    
-    private Date getEndDate() {
-    	Calendar now = Calendar.getInstance();
-		Date endDate = new Date();
-		endDate.setYear(now.get(Calendar.YEAR)-1900);
-		endDate.setMonth(now.get(Calendar.MONTH));
-		endDate.setDate(now.get(Calendar.DATE) + DAYS_IN_FUTURE);
-		endDate.setHours(now.get(Calendar.HOUR));
-		endDate.setMinutes(now.get(Calendar.MINUTE));
-		endDate.setSeconds(now.get(Calendar.SECOND));
-		return endDate;
-    }
-    
     private void loadStoreInfo() {
     	if(storeInfo.size() == 0) {
     		storeInfo.add(this.getString(R.string.store_address));
@@ -365,13 +296,32 @@ public class AnimeImportsAppActivity extends ListActivity {
     	storeInfoAdapter.notifyDataSetChanged();
     }
     
-    private void loadNews() {
-    	if(updates == null)
-    		updates = new ArrayList<String>();
-    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.row_main_menu, updates);
-    	setListAdapter(adapter);
-    	adapter.notifyDataSetChanged();
+    private void getNews() {
+    	mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving news feed...", true);
+    	//runOnUiThread(loadNews);
+    	Thread newsThread = new Thread(null, newsFetchThread, "loadNewsThread");
+    	newsThread.start();
     }
+    
+    private Runnable newsFetchThread = new Runnable() {
+    	@Override
+    	public void run() {
+    		AINewsManager nManager = AINewsManager.getInstance();
+    		updates = nManager.getItems();
+    		runOnUiThread(loadNewsThread);
+    	}
+    };
+    
+    private Runnable loadNewsThread = new Runnable() {
+    	@Override
+    	public void run() {
+	    	if(mProgressDialog != null)
+				mProgressDialog.dismiss();
+	    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.row_main_menu, updates);
+	    	setListAdapter(adapter);
+	    	adapter.notifyDataSetChanged();
+    	}
+    };
 
     /**
      * Calls the leagueFetchThread to fetch statistics from outside ONLY if we were just loaded into memory.
@@ -447,8 +397,9 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    		} 
 	        	catch (UnknownHostException e) {
 	        		runOnUiThread(recoverThread);
-	        		Thread t = new Thread(null, leagueDbFetchThread, "LeagueDbFetchThread");
-	        		t.start();
+	        		//Thread t = new Thread(null, leagueDbFetchThread, "LeagueDbFetchThread");
+	        		//t.start();
+	        		getNews();
 		    		return;
 	        	}
 	        	catch (IOException e) {
@@ -516,6 +467,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	            setListAdapter(adapter);
 	            if(mProgressDialog != null)
 	            	mProgressDialog.dismiss();
+	            tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
 	    		adapter.notifyDataSetChanged();
 	    		toggleLeagHeader();
     		}
@@ -530,7 +482,7 @@ public class AnimeImportsAppActivity extends ListActivity {
      */
     void getEvents() {
     	mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
-		Thread thread = new Thread(null, eventFetchThread, "MagentoBackground");
+		Thread thread = new Thread(null, eventFetchThread, "eventFetchThread");
 		thread.start();
     }
     
@@ -545,8 +497,8 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    	
 	    	try {
 	    		CustomCalendarURL customUrl = CustomCalendarURL.getUrl();
-	    		customUrl.startMin = new DateTime(getStartDate());
-	    		customUrl.startMax = new DateTime(getEndDate());
+	    		customUrl.startMin = new DateTime(cManager.getStartDate());
+	    		customUrl.startMax = new DateTime(cManager.getEndDate());
 	        	CalendarUrl url = new CalendarUrl(customUrl.build());
 	    		EventFeed feed = client.eventFeed().list().execute(url);
 
@@ -582,17 +534,24 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    	}
 	    	catch(UnknownHostException e) {
 	    		runOnUiThread(recoverThread);
-	    		loadNews();
+	    		getNews();
 	    		return;
 	    	}
 	    	catch(SocketTimeoutException e) {
 	    		runOnUiThread(recoverThread);
-	    		loadNews();
+	    		getNews();
+	    		return;
+	    	}
+	    	catch(ConnectTimeoutException e) {
+	    		runOnUiThread(recoverThread);
+	    		getNews();
+	    		return;
 	    	}
 	    	catch(IOException e) {
 	    		System.out.println("IOException yo");
 	    		e.printStackTrace();
 	    	}
+	    	
 	    	
 	    	runOnUiThread(loadEventsThread);
 		}
@@ -617,7 +576,7 @@ public class AnimeImportsAppActivity extends ListActivity {
      * Called when we encounter an exception (usually some kind of connection issue)
      * Alert the user via Toast
      */
-    private Runnable recoverThread = new Runnable() {
+    public Runnable recoverThread = new Runnable() {
     	@Override
     	public void run() {
     		Context context = getApplicationContext();
