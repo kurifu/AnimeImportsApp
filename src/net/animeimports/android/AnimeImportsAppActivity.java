@@ -30,6 +30,7 @@ import com.google.common.collect.Lists;
 
 import android.app.ProgressDialog;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.format.Time;
 import android.util.Log;
@@ -352,14 +353,16 @@ public class AnimeImportsAppActivity extends ListActivity {
     private Boolean okToFetch() {
     	Time now = new Time();
     	now.setToNow();
+    	if(lastLeagueFetch == null) {
+    		return true;
+    	}
+    	
     	if(now.hour - lastLeagueFetch.hour >= 1 && now.after(lastLeagueFetch)) {
     		System.out.println("It's ok to fetch!");
     		return true;
     	}
-    	else {
-    		System.out.println("NOT ok to fetch!");
-    		return false;
-    	}
+		System.out.println("NOT ok to fetch!");
+		return false;
     }
     
     private Runnable leagueDbFetchThread = new Runnable() {
@@ -368,7 +371,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 			leagueStats = (ArrayList<LeaguePlayer>)dm.selectAllLeague();
 			if(mProgressDialog != null)
 				mProgressDialog.dismiss();
-			runOnUiThread(loadLeagueThread);
+			loadLeague();
 		}
     };
     
@@ -407,9 +410,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    		}
         	}
     		
-    		if(mProgressDialog != null)
-    			mProgressDialog.dismiss();
-    		
     		if(leagueStats != null) {
     			Thread sl = new Thread(null, storeLeague, "StoreLeagueThread");
     			sl.start();
@@ -432,13 +432,15 @@ public class AnimeImportsAppActivity extends ListActivity {
     		
     		if(mProgressDialog != null)
     			mProgressDialog.dismiss();
-    		runOnUiThread(loadLeagueThread);
+    		loadLeague();
     	}
     };
     
-    private Runnable storeEvents = new Runnable() {
+    private class StoreEventsTask extends AsyncTask<Void, Void, Void> {
+    	
     	@Override
-    	public void run() {
+    	protected Void doInBackground(Void... arg0) {
+    		System.out.println("inside store events");
     		dm.deleteAllEvents();
     		
     		for(AIEventEntry e : events) {
@@ -446,54 +448,63 @@ public class AnimeImportsAppActivity extends ListActivity {
     			System.out.println("Storing name: " + e.getName() + ", Date: " + e.getDate() + ", EventType: " + e.getEventType().getIntValue() + " etc");
     		}
     		
+    		//runOnUiThread(loadEventsThread);
+    		return null;
+    	}
+    	
+    	@Override
+    	protected void onPostExecute(Void result) {
     		if(mProgressDialog != null)
     			mProgressDialog.dismiss();
-    		//runOnUiThread(); TODO: call newsFetchThread, get updated code from news branch
+    		
     	}
-    };
+    }
 
-    private Runnable loadLeagueThread = new Runnable() {
-    	@Override
-    	public void run() {
-    		try {
-	    		if(leagueSort == SORT_SESSION)
-	    			Collections.sort(leagueStats, new LeaguePlayerComparator(2));
-	    		else if(leagueSort == SORT_LIFETIME)
-	    			Collections.sort(leagueStats, new LeaguePlayerComparator(3));
-	    		else 
-	    			Collections.sort(leagueStats, new LeaguePlayerComparator(1));
-	    		
-	    		AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
-	            setListAdapter(adapter);
-	            if(mProgressDialog != null)
-	            	mProgressDialog.dismiss();
-	            tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
-	    		adapter.notifyDataSetChanged();
-	    		toggleLeagHeader();
-    		}
-    		catch(NullPointerException e) {
-    			runOnUiThread(recoverThread);
-    		}
-    	}
-    };
+    private void loadLeague() {
+		try {
+    		if(leagueSort == SORT_SESSION)
+    			Collections.sort(leagueStats, new LeaguePlayerComparator(2));
+    		else if(leagueSort == SORT_LIFETIME)
+    			Collections.sort(leagueStats, new LeaguePlayerComparator(3));
+    		else 
+    			Collections.sort(leagueStats, new LeaguePlayerComparator(1));
+    		
+    		AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
+            setListAdapter(adapter);
+            if(mProgressDialog != null)
+            	mProgressDialog.dismiss();
+            tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+    		adapter.notifyDataSetChanged();
+    		toggleLeagHeader();
+		}
+		catch(NullPointerException e) {
+			runOnUiThread(recoverThread);
+		}
+    }
 
     /**
      * Calls the eventFetchThread to query GoogleCalendar for events and loads a ProgressDialog
      */
-    void getEvents() {
-    	mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data...", true);
-		Thread thread = new Thread(null, eventFetchThread, "eventFetchThread");
-		thread.start();
+    @SuppressWarnings("unchecked")
+	void getEvents() {
+    	EventFetchTask task = new EventFetchTask();
+    	task.execute(events);
     }
     
     /**
      * Fetch calendar events from GoogleCalendar
-     * TODO: figure out caching
      */
-    private Runnable eventFetchThread = new Runnable() {
+    private class EventFetchTask extends AsyncTask<ArrayList<AIEventEntry>, Void, ArrayList<AIEventEntry>> {
+		private boolean success = true;
+		
 		@Override
-		public void run() {
-	    	events = new ArrayList<AIEventEntry>();
+		protected void onPreExecute() {
+			mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data BITCH", true);
+		}
+		
+    	@Override
+		protected ArrayList<AIEventEntry> doInBackground(ArrayList<AIEventEntry>... arg0) {
+			events = new ArrayList<AIEventEntry>();
 	    	
 	    	try {
 	    		CustomCalendarURL customUrl = CustomCalendarURL.getUrl();
@@ -532,45 +543,46 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    			events.add(e);
 	    		}
 	    	}
-	    	catch(UnknownHostException e) {
-	    		runOnUiThread(recoverThread);
-	    		getNews();
-	    		return;
-	    	}
-	    	catch(SocketTimeoutException e) {
-	    		runOnUiThread(recoverThread);
-	    		getNews();
-	    		return;
-	    	}
-	    	catch(ConnectTimeoutException e) {
-	    		runOnUiThread(recoverThread);
-	    		getNews();
-	    		return;
-	    	}
 	    	catch(IOException e) {
-	    		System.out.println("IOException yo");
+	    		runOnUiThread(recoverThread);
 	    		e.printStackTrace();
+	    		success = false;
 	    	}
 	    	
-	    	
-	    	runOnUiThread(loadEventsThread);
+	    	return events;
 		}
-	};
+    	
+    	@Override
+    	protected void onPostExecute(ArrayList<AIEventEntry> result) {
+    		mProgressDialog.dismiss();
+    		if(!success) {
+    			System.out.println("FAILED");
+    			getNews();
+    		}
+    		else {
+    			System.out.println("Inside onPostExecute, succeeded!");
+    	    	if(leagueStats != null) {
+        			//Thread sl = new Thread(null, storeEvents, "StoreEventsThread");
+        			//sl.start();
+    	    		StoreEventsTask task = new StoreEventsTask();
+    	    		task.execute();
+        		}
+    			loadEvents();
+    		}
+    	}
+    }
     
     /**
-     * Called after eventFetchThread has already filled our events array with events
+     * Called after eventFetchTask has already filled our events array with events
      */
-    private Runnable loadEventsThread = new Runnable() {
-    	@Override
-    	public void run() {
-    		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
-            setListAdapter(aiEventAdapter);
-            if(mProgressDialog != null)
-            	mProgressDialog.dismiss();
-    		aiEventAdapter.notifyDataSetChanged();
-    		toggleLeagHeader();
-    	}
-    };
+    private void loadEvents() {
+		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
+        setListAdapter(aiEventAdapter);
+        if(mProgressDialog != null)
+        	mProgressDialog.dismiss();
+		aiEventAdapter.notifyDataSetChanged();
+		toggleLeagHeader();
+    }
     
     /**
      * Called when we encounter an exception (usually some kind of connection issue)
