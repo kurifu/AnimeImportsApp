@@ -89,12 +89,12 @@ public class DataManager {
 		return leagueList;
 	}
 	
-	//String name, String date, int eventType, int mtgFormat, int mtgEventType, String summary) {
+	//CREATE TABLE events(id INTEGER PRIMARY KEY, name TEXT, date TEXT, eventType INTEGER, mtgFormat INTEGER, mtgEventType INTEGER, summary TEXT);
 	public ArrayList<AIEventEntry> selectAllEvents() {
 		eventsList = new ArrayList<AIEventEntry>();
-		Cursor cursor = this.db.query(EVENTS_TABLE_NAME, new String[] {}, null, null, null, null, "date asc");
+		Cursor cursor = this.db.query(EVENTS_TABLE_NAME, new String[] {"name", "date", "eventType", "mtgFormat", "mtgEventType", "summary"}, null, null, null, null, "date asc");
 		if(cursor.moveToFirst()) {
-			while(cursor.moveToNext()) {
+			do {
 				AIEventEntry e = new AIEventEntry();
 				e.setName(cursor.getString(0));
 				e.setDate(cursor.getString(1));
@@ -102,7 +102,8 @@ public class DataManager {
 				e.setMtgFormat(AIEventEntry.MTG_FORMAT.getValue(cursor.getInt(3)));
 				e.setMtgEventType(AIEventEntry.MTG_EVENT_TYPE.getValue(cursor.getInt(4)));
 				e.setSummary(cursor.getString(5));
-			}
+				eventsList.add(e);
+			} while(cursor.moveToNext());
 		}
 		
 		if(cursor != null && !cursor.isClosed()) {

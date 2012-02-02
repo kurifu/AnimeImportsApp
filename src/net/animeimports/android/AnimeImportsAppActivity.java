@@ -51,6 +51,7 @@ import android.graphics.Color;
 import net.animeimports.calendar.AIEventAdapter;
 import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.calendar.AIEventEntry.EVENT_TYPE;
+import net.animeimports.calendar.AIEventEntry.MTG_EVENT_TYPE;
 import net.animeimports.calendar.AIEventEntry.MTG_FORMAT;
 import net.animeimports.calendar.CustomCalendarURL;
 import net.animeimports.league.AILeagueAdapter;
@@ -98,6 +99,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	
 	private DataManager dm = null;
 	private Time lastLeagueFetch = null;
+	private Time lastEventFetch = null;
 	AICalendarManager cManager = null;
 	
     /**
@@ -173,6 +175,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
     				adapter.notifyDataSetChanged();
+    				leagueSort = SORT_NAME;
     			}
     		}
     	});
@@ -186,6 +189,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
     				adapter.notifyDataSetChanged();
+    				leagueSort = SORT_SESSION;
     			}
     		}
     	});
@@ -199,6 +203,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
     				setListAdapter(adapter);
     				adapter.notifyDataSetChanged();
+    				leagueSort = SORT_LIFETIME;
     			}
     		}
     	});
@@ -278,6 +283,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     		}
     		break;
     	case LEAGUE_LIFETIME:
+    		
     		break;
     	default:
     		Log.i("DEBUG", "Nothing to see here");
@@ -298,10 +304,15 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     private void getNews() {
-    	mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving news feed...", true);
-    	//runOnUiThread(loadNews);
-    	Thread newsThread = new Thread(null, newsFetchThread, "loadNewsThread");
-    	newsThread.start();
+    	if(updates == null || updates.size() == 0) {
+    		mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving news feed...", true);
+	    	Thread newsThread = new Thread(null, newsFetchThread, "loadNewsThread");
+	    	newsThread.start();
+    	}
+    	else {
+    		Thread newsThread = new Thread(null, loadNewsThread, "LoadNewsthread");
+    		newsThread.run();
+    	}
     }
     
     private Runnable newsFetchThread = new Runnable() {
@@ -323,62 +334,80 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    	adapter.notifyDataSetChanged();
     	}
     };
-
-    /**
-     * Calls the leagueFetchThread to fetch statistics from outside ONLY if we were just loaded into memory.
-     * TODO: add a manual fetch of some sort
-     * TODO: add db caching
-     */
-    void getLeague() {
-    	if(leagueStats == null || okToFetch() ) {
-    		System.out.println("ok to fetch!");
-    		mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving leaderboard...");
-	    	Thread thread = new Thread(null, leagueFetchThread, "LeagueFetchThread");
-	    	thread.start();
-	    	lastLeagueFetch = new Time();
-	    	lastLeagueFetch.setToNow();
-    	}
-    	else {
-    		System.out.println("not ok to fetch, hitting db");
-    		mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving db...");
-    		Thread t = new Thread(null, leagueDbFetchThread, "LeagueDbFetchThread");
-    		t.start();
-    	}
-    }
     
     /**
      * Return whether it's ok to fetch new data (if it's been 1 hour since the last fetch)
      * @return
      */
-    private Boolean okToFetch() {
+    private boolean okToFetchLeague() {
     	Time now = new Time();
     	now.setToNow();
     	if(lastLeagueFetch == null) {
+    		lastLeagueFetch = new Time();
+    		lastLeagueFetch.setToNow();
+    		System.out.println("It's ok to fetch league!");
     		return true;
     	}
     	
     	if(now.hour - lastLeagueFetch.hour >= 1 && now.after(lastLeagueFetch)) {
-    		System.out.println("It's ok to fetch!");
+    		System.out.println("It's ok to fetch league!");
+    		if(lastLeagueFetch == null)
+    			lastLeagueFetch = new Time();
+    		lastLeagueFetch.setToNow();
     		return true;
     	}
-		System.out.println("NOT ok to fetch!");
+		System.out.println("NOT ok to fetch league!");
 		return false;
     }
     
-    private Runnable leagueDbFetchThread = new Runnable() {
-		@Override
-		public void run() {
-			leagueStats = (ArrayList<LeaguePlayer>)dm.selectAllLeague();
-			if(mProgressDialog != null)
-				mProgressDialog.dismiss();
-			loadLeague();
-		}
-    };
+    private boolean okToFetchEvents() {
+    	Time now = new Time();
+    	now.setToNow();
+    	if(lastEventFetch == null) {
+    		lastEventFetch = new Time();
+    		lastEventFetch.setToNow();
+    		return true;
+    	}
+    	if(now.hour - lastEventFetch.hour >= 1 && now.after(lastEventFetch)) {
+    		System.out.println("It's ok to fetch events!");
+    		if(lastEventFetch == null)
+    			lastEventFetch = new Time();
+    		lastEventFetch.setToNow();
+    		return true;
+    	}
+		System.out.println("NOT ok to fetch events!");
+		return false;
+    }
+
+    /**
+     * Calls the leagueFetchThread to fetch statistics from outside ONLY if we were just loaded into memory.
+     * TODO: add a manual fetch of some sort
+     */
+    private void getLeague() {
+    	if(okToFetchLeague()) {
+	    	LeagueFetchTask task = new LeagueFetchTask();
+	    	task.execute(leagueStats);
+    	}
+    	else if(leagueStats == null || leagueStats.size() == 0) {
+    		LeagueFetchDbTask task = new LeagueFetchDbTask();
+    		task.execute(leagueStats);
+    	}
+    	else {
+    		loadLeague();
+    	}
+    }
     
-    private Runnable leagueFetchThread = new Runnable() {
+    private class LeagueFetchTask extends AsyncTask<ArrayList<LeaguePlayer>, Void, ArrayList<LeaguePlayer>> {
+    	private boolean success = true;
+    	
     	@Override
-    	public void run() {
-    		if(leagueStats == null) {
+    	protected void onPreExecute() {
+    		mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving league data...", true);
+    	}
+    	
+		@Override
+		protected ArrayList<LeaguePlayer> doInBackground(ArrayList<LeaguePlayer>... arg0) {
+			if(leagueStats == null) {
 	        	try {
 	    	    	SAXParserFactory spf = SAXParserFactory.newInstance();
 	    	    	SAXParser sp = spf.newSAXParser();
@@ -391,89 +420,122 @@ public class AnimeImportsAppActivity extends ListActivity {
 	        	}
 	        	catch (SAXException e) {
 	        		e.printStackTrace();
+	        		success = false;
 	        	} 
 	        	catch (ParserConfigurationException e) {
 	    			e.printStackTrace();
+	    			success = false;
 	    		} 
 	        	catch (MalformedURLException e) {
 	    			e.printStackTrace();
+	    			success = false;
 	    		} 
 	        	catch (UnknownHostException e) {
 	        		runOnUiThread(recoverThread);
-	        		//Thread t = new Thread(null, leagueDbFetchThread, "LeagueDbFetchThread");
-	        		//t.start();
-	        		getNews();
-		    		return;
+	        		success = false;
 	        	}
 	        	catch (IOException e) {
 	    			e.printStackTrace();
+	    			success = false;
 	    		}
         	}
-    		
-    		if(leagueStats != null) {
-    			Thread sl = new Thread(null, storeLeague, "StoreLeagueThread");
-    			sl.start();
-    		}
-    	}
+    		return leagueStats;
+		}
+		
+		@Override
+		protected void onPostExecute(ArrayList<LeaguePlayer> result) {
+			if(mProgressDialog != null)
+				mProgressDialog.dismiss();
+			if(success) {
+				Log.i("DEBUG", "Succeeded in fetching league!");
+				if(leagueStats != null || leagueStats.size() != 0) {
+					StoreLeagueTask task = new StoreLeagueTask();
+					task.execute();
+				}
+			}
+			else {
+				LeagueFetchDbTask task = new LeagueFetchDbTask();
+				task.execute();
+			}
+		}
     };
-    
-    /**
-     * Throw away stale data, store new results
-     */
-    private Runnable storeLeague = new Runnable() {
+
+    private class LeagueFetchDbTask extends AsyncTask<ArrayList<LeaguePlayer>, Void, ArrayList<LeaguePlayer>>{
+		@Override 
+		protected void onPreExecute() {
+			mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving cached league data...");
+		}
+    	
     	@Override
-    	public void run() {
-    		dm.deleteAllLeague();
-    		
-    		for (LeaguePlayer p : leagueStats) {
-    			dm.insertLeague(p.getPlayerName(), p.getPointsSession(), p.getPointsLifetime());
-    			System.out.println("Storing Name: " + p.getPlayerName() + ", Session: " + p.getPointsSession() + ", Lifetime: " + p.getPointsLifetime());
-    		}
-    		
+		protected ArrayList<LeaguePlayer> doInBackground(ArrayList<LeaguePlayer> ... arg0) {
+    		System.out.println("Inside LEAGUEfetchdbtask");
+    		leagueStats = dm.selectAllLeague();
+			return leagueStats;
+		}
+    	
+    	@Override
+    	protected void onPostExecute(ArrayList<LeaguePlayer> result) {
     		if(mProgressDialog != null)
     			mProgressDialog.dismiss();
     		loadLeague();
     	}
     };
     
-    private class StoreEventsTask extends AsyncTask<Void, Void, Void> {
+    /**
+     * Throw away stale data, store new results
+     */
+    private class StoreLeagueTask extends AsyncTask<ArrayList<LeaguePlayer>, Void, ArrayList<LeaguePlayer>> {
     	
+    	/*@Override
+		protected void onPreExecute() {
+			mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Storing league", true);
+		}*/
+		
     	@Override
-    	protected Void doInBackground(Void... arg0) {
-    		System.out.println("inside store events");
-    		dm.deleteAllEvents();
+		protected ArrayList<LeaguePlayer> doInBackground(ArrayList<LeaguePlayer>... arg0) {
+			dm.deleteAllLeague();
     		
-    		for(AIEventEntry e : events) {
-    			dm.insertEvents(e.getName(), e.getDate(), e.getEventType().getIntValue(), e.getMtgFormat().getIntValue(), e.getMtgEventType().getIntValue(), e.getSummary());
-    			System.out.println("Storing name: " + e.getName() + ", Date: " + e.getDate() + ", EventType: " + e.getEventType().getIntValue() + " etc");
+    		for (LeaguePlayer p : leagueStats) {
+    			dm.insertLeague(p.getPlayerName(), p.getPointsSession(), p.getPointsLifetime());
     		}
-    		
-    		//runOnUiThread(loadEventsThread);
     		return null;
-    	}
+		}
     	
     	@Override
-    	protected void onPostExecute(Void result) {
+    	protected void onPostExecute(ArrayList<LeaguePlayer> result) {
     		if(mProgressDialog != null)
     			mProgressDialog.dismiss();
-    		
+    		loadLeague();
     	}
-    }
+    };
 
     private void loadLeague() {
 		try {
-    		if(leagueSort == SORT_SESSION)
+			System.out.println("leagueSort is " + leagueSort);
+    		if(leagueSort == SORT_SESSION) {
     			Collections.sort(leagueStats, new LeaguePlayerComparator(2));
-    		else if(leagueSort == SORT_LIFETIME)
+    			tvSessionHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+    			tvNameHeader.setTextColor(getResources().getColor(R.color.tv_normal));
+    			tvLifetimeHeader.setTextColor(getResources().getColor(R.color.tv_normal));
+    		}
+    		else if(leagueSort == SORT_LIFETIME) {
     			Collections.sort(leagueStats, new LeaguePlayerComparator(3));
-    		else 
+    			tvLifetimeHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+    			tvSessionHeader.setTextColor(getResources().getColor(R.color.tv_normal));
+    			tvNameHeader.setTextColor(getResources().getColor(R.color.tv_normal));
+    		}
+    		else {
     			Collections.sort(leagueStats, new LeaguePlayerComparator(1));
+    			tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+    			tvSessionHeader.setTextColor(getResources().getColor(R.color.tv_normal));
+    			tvLifetimeHeader.setTextColor(getResources().getColor(R.color.tv_normal));
+    		}
     		
     		AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
             setListAdapter(adapter);
             if(mProgressDialog != null)
             	mProgressDialog.dismiss();
-            tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+            //tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));//TODO
     		adapter.notifyDataSetChanged();
     		toggleLeagHeader();
 		}
@@ -487,8 +549,17 @@ public class AnimeImportsAppActivity extends ListActivity {
      */
     @SuppressWarnings("unchecked")
 	void getEvents() {
-    	EventFetchTask task = new EventFetchTask();
-    	task.execute(events);
+    	if(okToFetchEvents()) {
+	    	EventFetchTask task = new EventFetchTask();
+	    	task.execute(events);
+    	}
+    	else if(events == null || events.size() == 0) {
+    		EventFetchDbTask task = new EventFetchDbTask();
+    		task.execute(events);
+    	}
+    	else {
+    		loadEvents();
+    	}
     }
     
     /**
@@ -499,7 +570,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		
 		@Override
 		protected void onPreExecute() {
-			mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving data BITCH", true);
+			mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving upcoming events...", true);
 		}
 		
     	@Override
@@ -553,22 +624,75 @@ public class AnimeImportsAppActivity extends ListActivity {
 		}
     	
     	@Override
+    	/**
+    	 * If we failed fetching, load from db. Otherwise load from memory
+    	 */
     	protected void onPostExecute(ArrayList<AIEventEntry> result) {
-    		mProgressDialog.dismiss();
-    		if(!success) {
-    			System.out.println("FAILED");
-    			getNews();
-    		}
-    		else {
-    			System.out.println("Inside onPostExecute, succeeded!");
-    	    	if(leagueStats != null) {
-        			//Thread sl = new Thread(null, storeEvents, "StoreEventsThread");
-        			//sl.start();
+    		if(mProgressDialog != null)
+    			mProgressDialog.dismiss();
+    		if(success) {
+    			System.out.println("Succeeded fetching!");
+    	    	if(events != null || events.size() != 0) {
     	    		StoreEventsTask task = new StoreEventsTask();
     	    		task.execute();
         		}
-    			loadEvents();
     		}
+    		else {
+    			System.out.println("FAILED, loading from db");
+    			EventFetchDbTask task = new EventFetchDbTask();
+    			task.execute();
+    		}
+    	}
+    }
+    
+    private class EventFetchDbTask extends AsyncTask<ArrayList<AIEventEntry>, Void, ArrayList<AIEventEntry>> {
+		@Override
+		protected void onPreExecute() {
+			mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Retrieving cached events...", true);
+		}
+    	@Override
+		protected ArrayList<AIEventEntry> doInBackground(ArrayList<AIEventEntry>... params) {
+			System.out.println("Inside eventfetchdbtask");
+			events = dm.selectAllEvents();
+			return events;
+		}
+		@Override
+		protected void onPostExecute(ArrayList<AIEventEntry> result) {
+			if(mProgressDialog != null)
+				mProgressDialog.dismiss();
+			loadEvents();
+		}
+    }
+    
+    private class StoreEventsTask extends AsyncTask<Void, Void, Void> {
+
+		/*@Override
+		protected void onPreExecute() {
+			mProgressDialog = ProgressDialog.show(AnimeImportsAppActivity.this, "Please wait...", "Storing events", true);
+		}*/
+		
+    	@Override
+    	protected Void doInBackground(Void... arg0) {
+    		System.out.println("inside store events");
+    		dm.deleteAllEvents();
+    		
+    		for(AIEventEntry e : events) {
+    			if(e.getMtgEventType() == null)
+    				e.setMtgEventType(MTG_EVENT_TYPE.UNKNOWN);
+    			if(e.getMtgFormat() == null)
+    				e.setMtgFormat(MTG_FORMAT.UNKNOWN);
+    			if(e.getEventType() == null)
+    				e.setEventType(EVENT_TYPE.UNKNOWN);
+    			dm.insertEvents(e.getName(), e.getDate(), e.getEventType().getIntValue(), e.getMtgFormat().getIntValue(), e.getMtgEventType().getIntValue(), e.getSummary());
+    		}
+    		return null;
+    	}
+    	
+    	@Override
+    	protected void onPostExecute(Void result) {
+    		if(mProgressDialog != null)
+    			mProgressDialog.dismiss();
+    		loadEvents();
     	}
     }
     
@@ -576,11 +700,12 @@ public class AnimeImportsAppActivity extends ListActivity {
      * Called after eventFetchTask has already filled our events array with events
      */
     private void loadEvents() {
+    	System.out.println("inside loadEvents");
 		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
         setListAdapter(aiEventAdapter);
+        aiEventAdapter.notifyDataSetChanged();
         if(mProgressDialog != null)
         	mProgressDialog.dismiss();
-		aiEventAdapter.notifyDataSetChanged();
 		toggleLeagHeader();
     }
     

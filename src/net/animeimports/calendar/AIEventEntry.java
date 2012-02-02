@@ -11,7 +11,8 @@ public class AIEventEntry {
 	
 	public enum EVENT_TYPE {
 		MTG(0), 
-		WARHAMMER(1);
+		WARHAMMER(1),
+		UNKNOWN(-1);
 		private int value;
 		private EVENT_TYPE(int value) {
 			this.value = value;
@@ -38,7 +39,8 @@ public class AIEventEntry {
 		EXTENDED(4), 
 		MODERN(5), 
 		LEGACY(6), 
-		VINTAGE(7);
+		VINTAGE(7),
+		UNKNOWN(-1);
 		private int value;
 		private MTG_FORMAT(int n) {
 			this.value = n;
@@ -65,7 +67,8 @@ public class AIEventEntry {
 		PRERELEASE(0), 
 		RELEASE(1), 
 		GPT(2), 
-		GAMEDAY(3);
+		GAMEDAY(3),
+		UNKNOWN(-1);
 		private int value;
 		private MTG_EVENT_TYPE(int n) {
 			this.value = n;

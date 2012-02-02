@@ -36,7 +36,7 @@ public class AINewsManager {
 			}
 		}
 		catch(TwitterException e) {
-            Log.e("AI ERROR", "Failed to get timeline: " + e.getMessage());
+            Log.e("AI ERROR", "Failed to get timeline: '" + e.getMessage() + "', statusCode: '" + e.getStatusCode() + "'");
             // TODO: run recover thread
 		}
 	}
