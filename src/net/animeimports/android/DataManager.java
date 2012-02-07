@@ -71,6 +71,12 @@ public class DataManager {
 		this.db.delete(EVENTS_TABLE_NAME, null, null);
 	}
 	
+	/**
+	 * Return all saved league statistics in our database. Note that the number of records we fetch is determined 
+	 * in the AICalendarManager class. For now we only store this number of stats, although in the future this can
+	 * change to save all stats ever downloaded, in which case this method will only return a subset of entries
+	 * @return
+	 */
 	public ArrayList<LeaguePlayer> selectAllLeague() {
 		leagueList = new ArrayList<LeaguePlayer>();
 		Cursor cursor = this.db.query(LEAGUE_TABLE_NAME, new String[] {"name", "pointsSession", "pointsLifetime"}, null, null, null, null, "name desc");
@@ -89,10 +95,15 @@ public class DataManager {
 		return leagueList;
 	}
 	
-	//CREATE TABLE events(id INTEGER PRIMARY KEY, name TEXT, date TEXT, eventType INTEGER, mtgFormat INTEGER, mtgEventType INTEGER, summary TEXT);
+	/**
+	 * Return all saved events in our database. Note that the number of events we fetch is determined in the
+	 * AICalendarManager class. For now we only store this number of events, although in the future this can
+	 * change to save all events ever downloaded, in which case this method will only return a subset of entries
+	 * @return
+	 */
 	public ArrayList<AIEventEntry> selectAllEvents() {
 		eventsList = new ArrayList<AIEventEntry>();
-		Cursor cursor = this.db.query(EVENTS_TABLE_NAME, new String[] {"name", "date", "eventType", "mtgFormat", "mtgEventType", "summary"}, null, null, null, null, "date asc");
+		Cursor cursor = this.db.query(EVENTS_TABLE_NAME, new String[] {"name", "date", "eventType", "mtgFormat", "mtgEventType", "summary"}, null, null, null, null, "date desc");
 		if(cursor.moveToFirst()) {
 			do {
 				AIEventEntry e = new AIEventEntry();
