@@ -17,9 +17,11 @@ import net.animeimports.league.LeaguePlayer;
 import net.animeimports.league.LeaguePlayerComparator;
 import net.animeimports.news.AINewsManager;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -221,7 +223,7 @@ public class AnimeImportsAppActivity extends ListActivity {
      * Loads all details about a particular event, called when an Event is clicked
      * @param position
      */
-    void handleEventClick(int position) {
+    private void handleEventClick(int position) {
     	currMenu = EVENT_DETAILS;
 		ArrayList<String> eventDetails = Lists.newArrayList();
 		AIEventEntry event = aiEventAdapter.getItems().get(position);
@@ -239,12 +241,48 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     /**
+     * Grab the link in the news update, prompt user to open in browser
+     * If no URL is found in the text, return. Note that we assume two cases:
+     * 1. The hyperlink is followed with a space
+     * 2. The hyperlink ends the news post
+     * @param position
+     */
+    private void handleNewsClick(int position) {
+    	String item = updates.get(position);
+    	int start = item.indexOf("http");
+    	if(start == -1)
+    		return;
+    	int end = item.indexOf(" ", start);
+    	if(end == -1)
+    		end = item.length();
+    	final String url = item.substring(start, end);
+
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	builder.setMessage("Open link in browser?")
+    		.setCancelable(false)
+    		.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					Intent i = new Intent(Intent.ACTION_VIEW);
+			    	i.setData(Uri.parse(url));
+			    	startActivity(i);
+				}
+			})
+			.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.cancel();
+				}
+			}).show();
+    }
+    
+    /**
      * Handles all clicks for any menu by looking at the currMenu member
      */
     protected void onListItemClick(ListView l, View v, int position, long id) {
-    	Log.i("DEBUG", "onListItemClick, menu is " + currMenu + ", position is " + position);
     	switch(currMenu) {
     	case NEWS:
+    		handleNewsClick(position);
     		break;
     	case EVENTS:
     		handleEventClick(position);
@@ -257,7 +295,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     		}
     		break;
     	case LEAGUE_LIFETIME:
-    		
     		break;
     	default:
     		Log.i("DEBUG", "Nothing to see here");
@@ -411,13 +448,13 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    	EventFetchTask task = new EventFetchTask(etListener, mContext);
 	    	task.execute(events);
     	}
-    	else {// if(events == null || events.size() == 0) {
+    	else if(events == null || events.size() == 0) {
     		EventFetchDbTask task = new EventFetchDbTask(etListener, mContext);
     		task.execute(events);
     	}
-    	/*else {
+    	else {
     		loadEvents();
-    	}*/
+    	}
     }
     
     protected void loadEvents() {
