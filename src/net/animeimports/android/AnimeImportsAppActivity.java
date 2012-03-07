@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.format.Time;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -42,7 +41,7 @@ import com.google.common.collect.Lists;
 public class AnimeImportsAppActivity extends ListActivity {
 
 	// Events / Lists
-	private List<String> storeInfo = Lists.newArrayList();
+	private List<String> storeInfo = null;
 	private AIEventAdapter aiEventAdapter;
 	
 	private int currMenu = 0;
@@ -72,15 +71,10 @@ public class AnimeImportsAppActivity extends ListActivity {
 	TextView tvLifetimeHeader = null;
 	
 	protected DataManager dm = null;
-	private Time lastLeagueFetch = null;
-	private Time lastEventFetch = null;
 	EventTaskListener etListener = null;
 	LeagueTaskListener ltListener = null;
 	Context mContext = null;
 	
-    /**
-     *  Called when the activity is first created. 
-     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,6 +101,12 @@ public class AnimeImportsAppActivity extends ListActivity {
     	etListener = new EventTaskListener();
     	ltListener = new LeagueTaskListener();
     	
+    	storeInfo = Lists.newArrayList();
+		storeInfo.add(this.getString(R.string.store_address));
+		storeInfo.add(this.getString(R.string.store_number));
+		storeInfo.add(this.getString(R.string.store_email));
+		storeInfo.add(this.getString(R.string.store_hours));
+    	
     	currMenu = NEWS;
     	swapIcons();
     	getNews();
@@ -115,8 +115,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     	    public void onClick(View v) {
     	    	currMenu = NEWS;
     	    	swapIcons();
-    	    	toggleLeagueHeader();
     	    	getNews();
+    	    	toggleLeagueHeader();
     	    }
     	});
     	imgEvents.setOnClickListener(new OnClickListener() {
@@ -130,8 +130,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     	    public void onClick(View v) {
     	    	currMenu = INFO;
     	    	swapIcons();
-    	    	toggleLeagueHeader();
     	    	loadStoreInfo();
+    	    	toggleLeagueHeader();
     	    }
     	});
     	imgLeague.setOnClickListener(new OnClickListener() {
@@ -302,13 +302,6 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     private void loadStoreInfo() {
-    	if(storeInfo.size() == 0) {
-    		storeInfo.add(this.getString(R.string.store_address));
-    		storeInfo.add(this.getString(R.string.store_number));
-    		storeInfo.add(this.getString(R.string.store_email));
-    		storeInfo.add(this.getString(R.string.store_hours));
-    	}
-    	
     	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
     	storeInfoAdapter.notifyDataSetChanged();
@@ -345,50 +338,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	    	adapter.notifyDataSetChanged();
     	}
     };
-    
-    /**
-     * Return whether it's ok to fetch new data (if it's been 1 hour since the last fetch)
-     * @return
-     */
-    private boolean okToFetchLeague() {
-    	Time now = new Time();
-    	now.setToNow();
-    	if(lastLeagueFetch == null) {
-    		lastLeagueFetch = new Time();
-    		lastLeagueFetch.setToNow();
-    		System.out.println("It's ok to fetch league!");
-    		return true;
-    	}
-    	
-    	if(now.hour - lastLeagueFetch.hour >= 1 && now.after(lastLeagueFetch)) {
-    		System.out.println("It's ok to fetch league!");
-    		if(lastLeagueFetch == null)
-    			lastLeagueFetch = new Time();
-    		lastLeagueFetch.setToNow();
-    		return true;
-    	}
-		System.out.println("NOT ok to fetch league!");
-		return false;
-    }
-    
-    private boolean okToFetchEvents() {
-    	Time now = new Time();
-    	now.setToNow();
-    	if(lastEventFetch == null) {
-    		lastEventFetch = new Time();
-    		lastEventFetch.setToNow();
-    		return true;
-    	}
-    	if(now.hour - lastEventFetch.hour >= 1 && now.after(lastEventFetch)) {
-    		System.out.println("It's ok to fetch events!");
-    		if(lastEventFetch == null)
-    			lastEventFetch = new Time();
-    		lastEventFetch.setToNow();
-    		return true;
-    	}
-		System.out.println("NOT ok to fetch events!");
-		return false;
-    }
 
     /**
      * Calls the leagueFetchThread to fetch statistics from outside ONLY if we were just loaded into memory.
@@ -396,7 +345,7 @@ public class AnimeImportsAppActivity extends ListActivity {
      */
     @SuppressWarnings("unchecked")
 	private void getLeague() {
-    	if(okToFetchLeague()) {
+    	if(dm.okToFetchLeague()) {
 	    	LeagueFetchTask task = new LeagueFetchTask(ltListener);
 	    	task.execute(leagueStats);
     	}
@@ -444,7 +393,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 
     @SuppressWarnings("unchecked")
 	private void getEvents() {
-    	if(okToFetchEvents()) {
+    	if(dm.okToFetchEvents()) {
 	    	EventFetchTask task = new EventFetchTask(etListener, mContext);
 	    	task.execute(events);
     	}
@@ -504,8 +453,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 			}
 		}
 		public void recover() {
-			Thread t = new Thread(null, recoverThread, "RecoverThread");
-			t.start();
+			runOnUiThread(recoverThread);
 		}
 	}
     
@@ -534,8 +482,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 			}
 		}
 		public void recover() {
-			Thread t = new Thread(null, recoverThread, "RecoverThread");
-			t.start();
+			runOnUiThread(recoverThread);
 		}
 	}
 }

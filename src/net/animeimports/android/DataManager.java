@@ -1,7 +1,6 @@
 package net.animeimports.android;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.league.LeaguePlayer;
@@ -11,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
+import android.text.format.Time;
 import android.util.Log;
 
 public class DataManager {
@@ -27,6 +27,9 @@ public class DataManager {
 	private static DataManager dm = null;
 	ArrayList<LeaguePlayer> leagueList = null;
 	ArrayList<AIEventEntry> eventsList = null;
+	
+	private Time lastLeagueFetch = null;
+	private Time lastEventFetch = null;
 	
 	public static DataManager getInstance(Context context) {
 		if(dm == null)
@@ -143,4 +146,49 @@ public class DataManager {
 			onCreate(db);
 		}
 	}
+	
+
+    /**
+     * Return whether it's ok to fetch new data (if it's been 1 hour since the last fetch)
+     * @return
+     */
+    public boolean okToFetchLeague() {
+    	Time now = new Time();
+    	now.setToNow();
+    	if(lastLeagueFetch == null) {
+    		lastLeagueFetch = new Time();
+    		lastLeagueFetch.setToNow();
+    		System.out.println("It's ok to fetch league!");
+    		return true;
+    	}
+    	
+    	if(now.hour - lastLeagueFetch.hour >= 1 && now.after(lastLeagueFetch)) {
+    		System.out.println("It's ok to fetch league!");
+    		if(lastLeagueFetch == null)
+    			lastLeagueFetch = new Time();
+    		lastLeagueFetch.setToNow();
+    		return true;
+    	}
+		System.out.println("NOT ok to fetch league!");
+		return false;
+    }
+    
+    public boolean okToFetchEvents() {
+    	Time now = new Time();
+    	now.setToNow();
+    	if(lastEventFetch == null) {
+    		lastEventFetch = new Time();
+    		lastEventFetch.setToNow();
+    		return true;
+    	}
+    	if(now.hour - lastEventFetch.hour >= 1 && now.after(lastEventFetch)) {
+    		System.out.println("It's ok to fetch events!");
+    		if(lastEventFetch == null)
+    			lastEventFetch = new Time();
+    		lastEventFetch.setToNow();
+    		return true;
+    	}
+		System.out.println("NOT ok to fetch events!");
+		return false;
+    }
 }
