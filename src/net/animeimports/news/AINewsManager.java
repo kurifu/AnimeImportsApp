@@ -13,7 +13,7 @@ import twitter4j.TwitterFactory;
 
 public class AINewsManager {
 	private static AINewsManager nManager = null;
-	private static ArrayList<String> items = null;
+	private static ArrayList<AINewsItem> items = null;
 
 	private static final String USER = "animeimports";
 	private static final int LIMIT = 20;
@@ -26,13 +26,16 @@ public class AINewsManager {
 	
 	private AINewsManager() {
 		Twitter twitter = new TwitterFactory().getInstance();
-		items = new ArrayList<String>();
+		items = new ArrayList<AINewsItem>();
 		try {
 			List<Status> statuses;
 			Paging paging = new Paging(1, LIMIT);
 			statuses = twitter.getUserTimeline(USER, paging);
 			for(Status status : statuses) {
-				items.add(status.getText());
+				AINewsItem newsItem = new AINewsItem();
+				newsItem.setItem(status.getText());
+				newsItem.setDate(status.getCreatedAt());
+				items.add(newsItem);
 			}
 		}
 		catch(TwitterException e) {
@@ -44,7 +47,7 @@ public class AINewsManager {
 	/**
 	 * @return the items
 	 */
-	public ArrayList<String> getItems() {
+	public ArrayList<AINewsItem> getItems() {
 		return items;
 	}
 }

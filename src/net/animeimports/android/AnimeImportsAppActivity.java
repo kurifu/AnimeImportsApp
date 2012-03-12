@@ -15,6 +15,8 @@ import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.league.AILeagueAdapter;
 import net.animeimports.league.LeaguePlayer;
 import net.animeimports.league.LeaguePlayerComparator;
+import net.animeimports.news.AINewsAdapter;
+import net.animeimports.news.AINewsItem;
 import net.animeimports.news.AINewsManager;
 
 import android.app.AlertDialog;
@@ -44,6 +46,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	// Events / Lists
 	private List<String> storeInfo = Lists.newArrayList();
 	private AIEventAdapter aiEventAdapter;
+	private AINewsAdapter aiNewsAdapter;
 	
 	private int currMenu = 0;
 	private final int NEWS = 1;
@@ -55,7 +58,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	protected static ProgressDialog mProgressDialog = null;
 	protected static ArrayList<AIEventEntry> events = null;
 	private static ArrayList<LeaguePlayer> leagueStats = null;
-	private static ArrayList<String> updates = null;
+	private static ArrayList<AINewsItem> updates = null;
 	
 	private int leagueSort = 0;
 	private final int SORT_NAME = 1;
@@ -248,7 +251,7 @@ public class AnimeImportsAppActivity extends ListActivity {
      * @param position
      */
     private void handleNewsClick(int position) {
-    	String item = updates.get(position);
+    	/*String item = updates.get(position);
     	int start = item.indexOf("http");
     	if(start == -1)
     		return;
@@ -273,7 +276,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 				public void onClick(DialogInterface dialog, int which) {
 					dialog.cancel();
 				}
-			}).show();
+			}).show();*/
     }
     
     /**
@@ -340,9 +343,11 @@ public class AnimeImportsAppActivity extends ListActivity {
     	public void run() {
 	    	if(mProgressDialog != null)
 				mProgressDialog.dismiss();
-	    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext, R.layout.row_main_menu, updates);
-	    	setListAdapter(adapter);
-	    	adapter.notifyDataSetChanged();
+	    	//ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext, R.layout.row_main_menu, updates);
+	    	//TODO
+	    	aiNewsAdapter = new AINewsAdapter(mContext, R.layout.row_news_item, updates);
+	    	setListAdapter(aiNewsAdapter);
+	    	aiNewsAdapter.notifyDataSetChanged();
     	}
     };
     
@@ -430,7 +435,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     			tvLifetimeHeader.setTextColor(getResources().getColor(R.color.tv_normal));
     		}
     		
-    		AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
+    		AILeagueAdapter adapter = new AILeagueAdapter(mContext, R.layout.row_league, leagueStats);
             setListAdapter(adapter);
     		adapter.notifyDataSetChanged();
     		if(mProgressDialog != null)
@@ -467,8 +472,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     /**
-     * Called when we encounter an exception (usually some kind of connection issue)
-     * Alert the user via Toast
+     * Called when we encounter an exception (usually some kind of connection issue); alert the user via Toast
+     * NOTE: you should only call this thread on the main UI thread!
      */
     public Runnable recoverThread = new Runnable() {
     	@Override
@@ -504,8 +509,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 			}
 		}
 		public void recover() {
-			Thread t = new Thread(null, recoverThread, "RecoverThread");
-			t.start();
+			runOnUiThread(recoverThread);
 		}
 	}
     
@@ -534,8 +538,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 			}
 		}
 		public void recover() {
-			Thread t = new Thread(null, recoverThread, "RecoverThread");
-			t.start();
+			runOnUiThread(recoverThread);
 		}
 	}
 }

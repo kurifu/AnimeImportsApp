@@ -50,26 +50,26 @@ public class LeagueFetchTask extends AsyncTask<ArrayList<LeaguePlayer>, Void, Ar
     	    	leagueStats = XmlParser.getStats();
         	}
         	catch (SAXException e) {
-        		e.printStackTrace();
+        		//e.printStackTrace();
         		success = false;
         	} 
         	catch (ParserConfigurationException e) {
-    			e.printStackTrace();
+    			//e.printStackTrace();
     			success = false;
     		} 
         	catch (MalformedURLException e) {
-    			e.printStackTrace();
+    			//e.printStackTrace();
     			success = false;
     		} 
         	catch (UnknownHostException e) {
         		//runOnUiThread(recoverThread);
         		if(listener != null)
         			listener.recover();
-        		e.printStackTrace();
+        		//e.printStackTrace();
         		success = false;
         	}
         	catch (IOException e) {
-    			e.printStackTrace();
+    			//e.printStackTrace();
     			success = false;
     		}
     	}
