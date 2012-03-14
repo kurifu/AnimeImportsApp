@@ -251,7 +251,7 @@ public class AnimeImportsAppActivity extends ListActivity {
      * @param position
      */
     private void handleNewsClick(int position) {
-    	/*String item = updates.get(position);
+    	String item = updates.get(position).getItem();
     	int start = item.indexOf("http");
     	if(start == -1)
     		return;
@@ -276,7 +276,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 				public void onClick(DialogInterface dialog, int which) {
 					dialog.cancel();
 				}
-			}).show();*/
+			}).show();
     }
     
     /**
