@@ -8,8 +8,11 @@ import net.animeimports.android.tasks.EventFetchDbTask;
 import net.animeimports.android.tasks.EventFetchTask;
 import net.animeimports.android.tasks.LeagueFetchDbTask;
 import net.animeimports.android.tasks.LeagueFetchTask;
+import net.animeimports.android.tasks.NewsFetchDbTask;
+import net.animeimports.android.tasks.NewsFetchTask;
 import net.animeimports.android.tasks.StoreEventsTask;
 import net.animeimports.android.tasks.StoreLeagueTask;
+import net.animeimports.android.tasks.StoreNewsTask;
 import net.animeimports.calendar.AIEventAdapter;
 import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.league.AILeagueAdapter;
@@ -79,6 +82,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private Time lastEventFetch = null;
 	EventTaskListener etListener = null;
 	LeagueTaskListener ltListener = null;
+	NewsTaskListener ntListener = null;
 	Context mContext = null;
 	
     /**
@@ -109,6 +113,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	tvLifetimeHeader = (TextView) findViewById(R.id.tvLifetimeHeader);
     	etListener = new EventTaskListener();
     	ltListener = new LeagueTaskListener();
+    	ntListener = new NewsTaskListener();
     	
     	currMenu = NEWS;
     	swapIcons();
@@ -118,7 +123,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	    public void onClick(View v) {
     	    	currMenu = NEWS;
     	    	swapIcons();
-    	    	toggleLeagueHeader();
+    	    	//toggleLeagueHeader();
     	    	getNews();
     	    }
     	});
@@ -133,7 +138,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	    public void onClick(View v) {
     	    	currMenu = INFO;
     	    	swapIcons();
-    	    	toggleLeagueHeader();
+    	    	//toggleLeagueHeader();
     	    	loadStoreInfo();
     	    }
     	});
@@ -315,41 +320,27 @@ public class AnimeImportsAppActivity extends ListActivity {
     	ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
     	setListAdapter(storeInfoAdapter);
     	storeInfoAdapter.notifyDataSetChanged();
+    	toggleLeagueHeader();
     }
     
     private void getNews() {
     	if(updates == null || updates.size() == 0) {
-    		mProgressDialog = ProgressDialog.show(this, "Please wait...", "Retrieving news feed...", true);
-	    	Thread newsThread = new Thread(null, newsFetchThread, "loadNewsThread");
-	    	newsThread.start();
+	    	NewsFetchTask task = new NewsFetchTask(ntListener);
+	    	task.execute(updates);
     	}
     	else {
-    		Thread newsThread = new Thread(null, loadNewsThread, "LoadNewsthread");
-    		newsThread.run();
+    		loadNews();
     	}
     }
     
-    private Runnable newsFetchThread = new Runnable() {
-    	@Override
-    	public void run() {
-    		AINewsManager nManager = AINewsManager.getInstance();
-    		updates = nManager.getItems();
-    		runOnUiThread(loadNewsThread);
-    	}
-    };
-    
-    private Runnable loadNewsThread = new Runnable() {
-    	@Override
-    	public void run() {
-	    	if(mProgressDialog != null)
-				mProgressDialog.dismiss();
-	    	//ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext, R.layout.row_main_menu, updates);
-	    	//TODO
-	    	aiNewsAdapter = new AINewsAdapter(mContext, R.layout.row_news_item, updates);
-	    	setListAdapter(aiNewsAdapter);
-	    	aiNewsAdapter.notifyDataSetChanged();
-    	}
-    };
+    private void loadNews() {
+    	aiNewsAdapter = new AINewsAdapter(mContext, R.layout.row_news_item, updates);
+    	setListAdapter(aiNewsAdapter);
+    	aiNewsAdapter.notifyDataSetChanged();
+    	if(mProgressDialog != null)
+			mProgressDialog.dismiss();
+    	toggleLeagueHeader();
+    }
     
     /**
      * Return whether it's ok to fetch new data (if it's been 1 hour since the last fetch)
@@ -485,6 +476,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	}
     };
     
+    // TODO: Refactor all 3 Listeners into a single class 
 	public class LeagueTaskListener {
 		public void init() {
 			mProgressDialog = ProgressDialog.show(mContext, "Please wait...", "Retrieving league statistics...");
@@ -525,7 +517,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		public void onComplete(boolean success, ArrayList<AIEventEntry> result) {
 			if(success) {
 				System.out.println("Succeeded fetching!");
-		    	if(result != null || result.size() != 0) {
+		    	if(result != null && result.size() != 0) {
 		    		events = result;
 		    		StoreEventsTask task = new StoreEventsTask(events, etListener, mContext);
 		    		task.execute();
@@ -541,4 +533,33 @@ public class AnimeImportsAppActivity extends ListActivity {
 			runOnUiThread(recoverThread);
 		}
 	}
+    
+    public class NewsTaskListener {
+    	public void init() {
+    		mProgressDialog = ProgressDialog.show(mContext, "Please wait...", "Retrieving latest news...");
+    	}
+    	public void onDbComplete(ArrayList<AINewsItem> result) {
+    		if(result != null)
+    			updates = result;
+    		loadNews();
+    	}
+    	public void onComplete(boolean success, ArrayList<AINewsItem> result) {
+    		if(success) {
+    			System.out.println("Succeeded in fetching news!");
+    			if(result != null && result.size() != 0) {
+    				updates = result;
+    				StoreNewsTask task = new StoreNewsTask(updates, ntListener, mContext);
+    				task.execute();
+    			}
+    		}
+    		else {
+    			System.out.println("FAILED to fetch news, loading from db?");
+    			NewsFetchDbTask task = new NewsFetchDbTask(ntListener, mContext);
+    			task.execute();
+    		}
+    	}
+    	public void recover() {
+    		runOnUiThread(recoverThread);
+    	}
+    }
 }

@@ -34,7 +34,7 @@ public class AINewsManager {
 			for(Status status : statuses) {
 				AINewsItem newsItem = new AINewsItem();
 				newsItem.setItem(status.getText());
-				newsItem.setDate(status.getCreatedAt());
+				newsItem.setDate(status.getCreatedAt().toString());
 				items.add(newsItem);
 			}
 		}

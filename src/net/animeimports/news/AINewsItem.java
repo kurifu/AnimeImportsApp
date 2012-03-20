@@ -2,6 +2,8 @@ package net.animeimports.news;
 
 import java.util.Date;
 
+import android.text.format.DateFormat;
+
 public class AINewsItem {
 	private String item;
 	private Date date;
@@ -27,7 +29,9 @@ public class AINewsItem {
 	/**
 	 * @param date the date to set
 	 */
-	public void setDate(Date date) {
-		this.date = date;
+	public void setDate(String date) {
+		Date d = new Date(date);
+		System.out.println("Date is " + d);
+		this.date = d;
 	}
 }
