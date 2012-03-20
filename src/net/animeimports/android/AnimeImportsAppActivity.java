@@ -20,6 +20,8 @@ import net.animeimports.news.AINewsManager;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.app.AlertDialog.Builder;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -38,6 +40,15 @@ import android.widget.Toast;
 
 import com.google.common.collect.Lists;
 
+/**
+ * Main Activity for AI, performs the following functions:
+ * 1. Fetch news updates via Twitter
+ * 2. Provides store info, such as street address, phone number, website, email
+ * 3. Find upcoming store events via GoogleCalendar
+ * 4. Provide statistics for the current MTG League session, along with lifetime point totals
+ * @author kurifuc4
+ *
+ */
 public class AnimeImportsAppActivity extends ListActivity {
 
 	// Events / Lists
@@ -75,6 +86,8 @@ public class AnimeImportsAppActivity extends ListActivity {
 	LeagueTaskListener ltListener = null;
 	Context mContext = null;
 	
+	private static final String MAPS_URL = "http://maps.google.com/maps?daddr=";
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,7 +96,8 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     /**
-     * Initialize arrays and data members
+     * Find all UI elements we tap into, initialize static data
+     * TODO: find a better way to initialize onclicklisteners
      */
     public void initializeApp() {
     	mContext = this;
@@ -185,6 +199,9 @@ public class AnimeImportsAppActivity extends ListActivity {
     	});
     }
     
+    /**
+     * Toggle the Name/Session/League header bar displayed on the League screen
+     */
     private void toggleLeagueHeader() {
     	if(currMenu == LEAGUE_LIFETIME)
     		leagueHeader.setVisibility(View.VISIBLE);
@@ -193,7 +210,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     }
     
     /**
-     * Toggles between an icon's on and off state
+     * Toggles between an icon's on and off state (main activity's menu icons)
      * @param currIcon
      */
     private void swapIcons() {
@@ -276,6 +293,65 @@ public class AnimeImportsAppActivity extends ListActivity {
 			}).show();
     }
     
+    private void handleInfoClick(int position) {
+    	Builder builder = new AlertDialog.Builder(mContext);
+    	switch(position) {
+    	case 0:
+        	builder.setMessage("Show store location in Maps?")
+        		.setCancelable(false)
+        		.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+    				@Override
+    				public void onClick(DialogInterface dialog, int which) {
+    					Uri uri = Uri.parse("geo:" + mContext.getString(R.string.store_address_lattitude) + "," + mContext.getString(R.string.store_address_longitude));
+    		    		Intent mapIntent = new Intent(Intent.ACTION_VIEW, uri);
+    		    		startActivity(mapIntent);
+    				}
+    			})
+    			.setNegativeButton("No", new DialogInterface.OnClickListener() {
+    				@Override
+    				public void onClick(DialogInterface dialog, int which) {
+    					dialog.cancel();
+    				}
+    			}).show();
+    		break;
+    	case 1:
+    		builder.setMessage("Call store?").setCancelable(false)
+    			.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+						phoneIntent.setData(Uri.parse("tel:" + mContext.getString(R.string.store_number)));
+						startActivity(phoneIntent);
+					}
+				})
+				.setNegativeButton("No", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				}).show();
+			break;
+    	case 2:
+    		builder.setMessage("Email store?").setCancelable(false)
+	    		.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						Intent emailIntent = new Intent(Intent.ACTION_SEND);
+			    		emailIntent.setType("plain/text");
+			    		startActivity(emailIntent.createChooser(emailIntent, "Send email with:"));
+					}
+				})
+				.setNegativeButton("No", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				}).show();
+    		break;
+		default:
+			break;
+    	}
+    }
     /**
      * Handles all clicks for any menu by looking at the currMenu member
      */
@@ -288,11 +364,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     		handleEventClick(position);
     		break;
     	case INFO:
-    		if(position == 1) {
-    			Intent phoneIntent = new Intent(Intent.ACTION_CALL);
-    			phoneIntent.setData(Uri.parse("tel:" + this.getString(R.string.store_number)));
-    			startActivity(phoneIntent);
-    		}
+    		handleInfoClick(position);
     		break;
     	case LEAGUE_LIFETIME:
     		break;

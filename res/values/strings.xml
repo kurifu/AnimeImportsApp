@@ -11,4 +11,6 @@
     <string name="league_name">Name</string>
     <color name="tv_highlight">#0099CC</color>
     <color name="tv_normal">#ffffffff</color>
+    <string name="store_address_lattitude">37.639899</string>
+    <string name="store_address_longitude">-122.492449</string>
 </resources>

@@ -1,2 +1,3 @@
 bin/*
 *.ics
+gen/net/animeimports/android/R.java
