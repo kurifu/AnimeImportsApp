@@ -62,6 +62,8 @@ public final class R {
         public static final int tvLifetimeHeader=0x7f060004;
         public static final int tvName=0x7f06000d;
         public static final int tvNameHeader=0x7f060002;
+        public static final int tvNewsDate=0x7f060011;
+        public static final int tvNewsItem=0x7f060010;
         public static final int tvSession=0x7f06000e;
         public static final int tvSessionHeader=0x7f060003;
     }
@@ -72,6 +74,7 @@ public final class R {
         public static final int row_event_details=0x7f030003;
         public static final int row_league=0x7f030004;
         public static final int row_main_menu=0x7f030005;
+        public static final int row_news_item=0x7f030006;
     }
     public static final class string {
         public static final int app_name=0x7f040000;

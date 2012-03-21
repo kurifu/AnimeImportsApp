@@ -85,7 +85,7 @@ public class EventFetchTask extends AsyncTask<ArrayList<AIEventEntry>, Void, Arr
     	catch(IOException e) {
     		if(listener != null)
     			listener.recover();
-    		e.printStackTrace();
+    		//e.printStackTrace();
     		success = false;
     	}
     	

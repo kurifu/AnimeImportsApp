@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.league.LeaguePlayer;
+import net.animeimports.news.AINewsItem;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -18,15 +19,19 @@ public class DataManager {
 	private static final int DB_VERSION = 1;
 	private static final String LEAGUE_TABLE_NAME = "league_stats";
 	private static final String EVENTS_TABLE_NAME = "events";
+	private static final String NEWS_TABLE_NAME = "news";
 	private Context mContext;
 	private SQLiteDatabase db;
 	private SQLiteStatement insert_stmt_league;
 	private SQLiteStatement insert_stmt_events;
+	private SQLiteStatement insert_stmt_news;
 	private static final String INSERT_LEAGUE = "insert into " + LEAGUE_TABLE_NAME + "(name, pointsSession, pointsLifetime) values (?, ?, ?)";
 	private static final String INSERT_EVENTS = "insert into " + EVENTS_TABLE_NAME + "(name, date, eventType, mtgFormat, mtgEventType, summary) values (?, ?, ?, ?, ?, ?)";
+	private static final String INSERT_NEWS = "insert into " + NEWS_TABLE_NAME + "(name, date) values (?, ?)";
 	private static DataManager dm = null;
 	ArrayList<LeaguePlayer> leagueList = null;
 	ArrayList<AIEventEntry> eventsList = null;
+	ArrayList<AINewsItem> newsList = null;
 	
 	private Time lastLeagueFetch = null;
 	private Time lastEventFetch = null;
@@ -43,6 +48,13 @@ public class DataManager {
 		this.db = helper.getWritableDatabase();
 		this.insert_stmt_league = this.db.compileStatement(INSERT_LEAGUE);
 		this.insert_stmt_events = this.db.compileStatement(INSERT_EVENTS);
+		this.insert_stmt_news = this.db.compileStatement(INSERT_NEWS);
+	}
+	
+	public long insertNews(String news, String date) {
+		this.insert_stmt_news.bindString(1, news);
+		this.insert_stmt_news.bindString(2, date);
+		return this.insert_stmt_news.executeInsert();
 	}
 	
 	public long insertEvents(String name, String date, int eventType, int mtgFormat, int mtgEventType, String summary) {
@@ -72,6 +84,28 @@ public class DataManager {
 	public void deleteAllEvents() {
 		Log.i("DEBUG", "inside deleteAllEvents");
 		this.db.delete(EVENTS_TABLE_NAME, null, null);
+	}
+
+	// TODO: not sure if this should be public
+	public void deleteAllNews() {
+		Log.i("DEBUG", "inside deleteAllNews");
+		this.db.delete(NEWS_TABLE_NAME, null, null);
+	}
+	
+	public ArrayList<AINewsItem> selectAllNews() {
+		newsList = new ArrayList<AINewsItem>();
+		Cursor cursor = this.db.query(NEWS_TABLE_NAME, new String[] {"name", "date"}, null, null, null, null, "date desc");
+		if(cursor.moveToFirst()) {
+			while(cursor.moveToNext()) {
+				AINewsItem n = new AINewsItem();
+				n.setItem(cursor.getString(0));
+				
+			}
+		}
+		if(cursor != null && !cursor.isClosed()) {
+			cursor.close();
+		}
+		return newsList;
 	}
 	
 	/**
@@ -136,6 +170,7 @@ public class DataManager {
 			Log.i("DEBUG", "Creating a database, should only be called once!");
 			db.execSQL("CREATE TABLE " + LEAGUE_TABLE_NAME + "(id INTEGER PRIMARY KEY, name TEXT, pointsSession INTEGER, pointsLifetime INTEGER)");
 			db.execSQL("CREATE TABLE " + EVENTS_TABLE_NAME + "(id INTEGER PRIMARY KEY, name TEXT, date TEXT, eventType INTEGER, mtgFormat INTEGER, mtgEventType INTEGER, summary TEXT)");
+			db.execSQL("CREATE TABLE " + NEWS_TABLE_NAME + "(id INTEGER PRIMARY KEY, name TEXT, date TEXT)");
 		}
 		
 		@Override
@@ -143,6 +178,7 @@ public class DataManager {
 			Log.i("DEBUG", "Upgrading db!!!");
 			db.execSQL("DROP TABLE IF EXISTS " + LEAGUE_TABLE_NAME);
 			db.execSQL("DROP TABLE IF EXISTS " + EVENTS_TABLE_NAME);
+			db.execSQL("DROP TABLE IF EXISTS " + NEWS_TABLE_NAME);
 			onCreate(db);
 		}
 	}
