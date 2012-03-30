@@ -18,6 +18,7 @@ import net.animeimports.calendar.AIEventEntry;
 import net.animeimports.league.AILeagueAdapter;
 import net.animeimports.league.LeaguePlayer;
 import net.animeimports.league.LeaguePlayerComparator;
+import net.animeimports.lifecounter.AILifeCounter;
 import net.animeimports.news.AINewsAdapter;
 import net.animeimports.news.AINewsItem;
 import net.animeimports.news.AINewsManager;
@@ -82,6 +83,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	ImageView imgLeague = null;
 	ImageView imgEvents = null;
 	ImageView imgNews = null;
+	ImageView imgTest = null;
 	LinearLayout leagueHeader = null;
 	TextView tvNameHeader = null;
 	TextView tvSessionHeader = null;
@@ -115,6 +117,7 @@ public class AnimeImportsAppActivity extends ListActivity {
     	imgLeague = (ImageView) findViewById(R.id.imgLeague);
     	imgEvents = (ImageView) findViewById(R.id.imgEvents);
     	imgNews = (ImageView) findViewById(R.id.imgNews);
+    	imgTest = (ImageView) findViewById(R.id.imgTest);
     	leagueHeader = (LinearLayout) findViewById(R.id.llLeagueHead);
     	tvNameHeader = (TextView) findViewById(R.id.tvNameHeader);
     	tvSessionHeader = (TextView) findViewById(R.id.tvSessionHeader);
@@ -131,8 +134,15 @@ public class AnimeImportsAppActivity extends ListActivity {
     	
     	currMenu = NEWS;
     	swapIcons();
-    	getNews();
+    	//getNews();
     	
+    	imgTest.setOnClickListener(new OnClickListener() {
+    		public void onClick(View v) {
+    			Intent i = new Intent(Intent.ACTION_VIEW);
+    			i.setClassName(mContext, AILifeCounter.class.getName());
+    			startActivity(i);
+    		}
+    	});
     	imgNews.setOnClickListener(new OnClickListener() {
     	    public void onClick(View v) {
     	    	currMenu = NEWS;

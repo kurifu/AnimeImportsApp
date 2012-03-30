@@ -13,4 +13,10 @@
     <color name="tv_normal">#ffffffff</color>
     <string name="store_address_lattitude">37.639899</string>
     <string name="store_address_longitude">-122.492449</string>
+    <string name="counter_life_default">20</string>
+    <string name="counter_plus">+</string>
+    <string name="counter_minus">-</string>
+    <string name="back">Back</string>
+    <string name="counter_poison_default">0</string>
+    <string name="counter_message_default">Hello World!</string>
 </resources>

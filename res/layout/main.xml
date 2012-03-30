@@ -86,6 +86,12 @@
     			android:layout_width="wrap_content"
     			android:id="@+id/imgLeague" 
     			android:src="@drawable/ic_league_off"/>
+    		<ImageView android:background="@null" 
+    			android:layout_weight=".2"
+    			android:layout_height="wrap_content" 
+    			android:layout_width="wrap_content"
+    			android:id="@+id/imgTest" 
+    			android:src="@drawable/ic_league_off"/>
     	</LinearLayout>
     </LinearLayout>
 </RelativeLayout>
