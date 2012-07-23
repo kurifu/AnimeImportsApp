@@ -20,13 +20,11 @@ import net.animeimports.league.LeaguePlayer;
 import net.animeimports.league.LeaguePlayerComparator;
 import net.animeimports.news.AINewsAdapter;
 import net.animeimports.news.AINewsItem;
-import net.animeimports.news.AINewsManager;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.app.AlertDialog.Builder;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -35,7 +33,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -93,8 +90,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	NewsTaskListener ntListener = null;
 	Context mContext = null;
 	
-	private static final String MAPS_URL = "http://maps.google.com/maps?daddr=";
-	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,83 +124,73 @@ public class AnimeImportsAppActivity extends ListActivity {
 		storeInfo.add(this.getString(R.string.store_email));
 		storeInfo.add(this.getString(R.string.store_hours));
     	
+		onClickShowNews(null);
+    }
+    
+    public void onClickShowNews(View v) {
     	currMenu = NEWS;
     	swapIcons();
     	getNews();
-    	
-    	imgNews.setOnClickListener(new OnClickListener() {
-    	    public void onClick(View v) {
-    	    	currMenu = NEWS;
-    	    	swapIcons();
-    	    	getNews();
-    	    	toggleLeagueHeader();
-    	    }
-    	});
-    	imgEvents.setOnClickListener(new OnClickListener() {
-    	    public void onClick(View v) {
-    	    	currMenu = EVENTS;
-    	    	swapIcons();
-    	    	getEvents();
-    	    }
-    	});
-    	imgInfo.setOnClickListener(new OnClickListener() {
-    	    public void onClick(View v) {
-    	    	currMenu = INFO;
-    	    	swapIcons();
-    	    	loadStoreInfo();
-    	    	toggleLeagueHeader();
-    	    }
-    	});
-    	imgLeague.setOnClickListener(new OnClickListener() {
-    	    public void onClick(View v) {
-    	    	currMenu = LEAGUE_LIFETIME;
-    	    	swapIcons();
-    	    	getLeague();
-    	    }
-    	});
-    	tvNameHeader.setOnClickListener(new OnClickListener() {
-    		public void onClick(View v) {
-    			if(leagueStats != null) {
-    				tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
-    				tvSessionHeader.setTextColor(Color.WHITE);
-    				tvLifetimeHeader.setTextColor(Color.WHITE);
-    				Collections.sort(leagueStats, new LeaguePlayerComparator(1));
-    				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
-    				setListAdapter(adapter);
-    				adapter.notifyDataSetChanged();
-    				leagueSort = SORT_NAME;
-    			}
-    		}
-    	});
-    	tvSessionHeader.setOnClickListener(new OnClickListener() {
-    		public void onClick(View v) {
-    			if(leagueStats != null) {
-    				tvNameHeader.setTextColor(Color.WHITE);
-    				tvSessionHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
-    				tvLifetimeHeader.setTextColor(Color.WHITE);
-    				Collections.sort(leagueStats, new LeaguePlayerComparator(2));
-    				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
-    				setListAdapter(adapter);
-    				adapter.notifyDataSetChanged();
-    				leagueSort = SORT_SESSION;
-    			}
-    		}
-    	});
-    	tvLifetimeHeader.setOnClickListener(new OnClickListener() {
-    		public void onClick(View v) {
-    			if(leagueStats != null) {
-    				tvNameHeader.setTextColor(Color.WHITE);
-    				tvSessionHeader.setTextColor(Color.WHITE);
-    				tvLifetimeHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
-    				Collections.sort(leagueStats, new LeaguePlayerComparator(3));
-    				AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
-    				setListAdapter(adapter);
-    				adapter.notifyDataSetChanged();
-    				leagueSort = SORT_LIFETIME;
-    			}
-    		}
-    	});
+    	toggleLeagueHeader();
     }
+    
+    public void onClickShowEvents(View v) {
+    	currMenu = EVENTS;
+    	swapIcons();
+    	getEvents();
+    }
+    
+    public void onClickShowInfo(View v) {
+    	currMenu = INFO;
+    	swapIcons();
+    	loadStoreInfo();
+    	toggleLeagueHeader();
+    }
+    
+    public void onClickShowLeague(View v) {
+    	currMenu = LEAGUE_LIFETIME;
+    	swapIcons();
+    	getLeague();
+    }
+    
+    public void onClickNameHeader(View v) {
+		if(leagueStats != null) {
+			tvNameHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+			tvSessionHeader.setTextColor(Color.WHITE);
+			tvLifetimeHeader.setTextColor(Color.WHITE);
+			Collections.sort(leagueStats, new LeaguePlayerComparator(1));
+			AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
+			setListAdapter(adapter);
+			adapter.notifyDataSetChanged();
+			leagueSort = SORT_NAME;
+		}
+	}
+    
+    public void onClickSessionHeader(View v) {
+		if(leagueStats != null) {
+			tvNameHeader.setTextColor(Color.WHITE);
+			tvSessionHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+			tvLifetimeHeader.setTextColor(Color.WHITE);
+			Collections.sort(leagueStats, new LeaguePlayerComparator(2));
+			AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
+			setListAdapter(adapter);
+			adapter.notifyDataSetChanged();
+			leagueSort = SORT_SESSION;
+		}
+	}
+    
+    public void onClickLifetimeHeader(View v) {
+		if(leagueStats != null) {
+			tvNameHeader.setTextColor(Color.WHITE);
+			tvSessionHeader.setTextColor(Color.WHITE);
+			tvLifetimeHeader.setTextColor(getResources().getColor(R.color.tv_highlight));
+			Collections.sort(leagueStats, new LeaguePlayerComparator(3));
+			AILeagueAdapter adapter = new AILeagueAdapter(AnimeImportsAppActivity.this, R.layout.row_league, leagueStats);
+			setListAdapter(adapter);
+			adapter.notifyDataSetChanged();
+			leagueSort = SORT_LIFETIME;
+		}
+	}
     
     /**
      * Toggle the Name/Session/League header bar displayed on the League screen
@@ -346,7 +331,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 					public void onClick(DialogInterface dialog, int which) {
 						Intent emailIntent = new Intent(Intent.ACTION_SEND);
 			    		emailIntent.setType("plain/text");
-			    		startActivity(emailIntent.createChooser(emailIntent, "Send email with:"));
+			    		startActivity(Intent.createChooser(emailIntent, "Send email with:"));
 					}
 				})
 				.setNegativeButton("No", new DialogInterface.OnClickListener() {

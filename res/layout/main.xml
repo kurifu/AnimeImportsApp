@@ -25,7 +25,9 @@
 	    	android:layout_width="100dip"
 	    	android:layout_height="wrap_content"
 	    	android:gravity="center"
-	    	android:textAppearance="?android:attr/textAppearanceLarge"/>
+	    	android:textAppearance="?android:attr/textAppearanceLarge"
+	    	android:clickable="true"
+	    	android:onClick="onClickNameHeader"/>
 	    <TextView android:layout_column="1"
 	    	android:id="@+id/tvSessionHeader"
 	    	android:text="@string/league_session"
@@ -33,7 +35,9 @@
 	    	android:layout_height="wrap_content"
 	    	android:layout_weight=".3"
 	    	android:gravity="center"
-	    	android:textAppearance="?android:attr/textAppearanceLarge"/>
+	    	android:textAppearance="?android:attr/textAppearanceLarge"
+	    	android:clickable="true"
+	    	android:onClick="onClickSessionHeader"/>
 	    <TextView android:layout_column="2"
 	    	android:id="@+id/tvLifetimeHeader"
 	    	android:text="@string/league_lifetime"
@@ -41,7 +45,9 @@
 	    	android:layout_height="wrap_content"
 	    	android:layout_weight=".2"
 	    	android:gravity="center"
-	    	android:textAppearance="?android:attr/textAppearanceLarge"/>
+	    	android:textAppearance="?android:attr/textAppearanceLarge"
+	    	android:clickable="true"
+	    	android:onClick="onClickLifetimeHeader"/>
     	</LinearLayout>
     	
     	<View android:layout_height="2dip"
@@ -67,25 +73,30 @@
     			android:layout_weight=".2"
     			android:layout_height="wrap_content" 
     			android:layout_width="wrap_content" 
-    			android:id="@+id/imgNews" android:src="@drawable/ic_news_off"/>
+    			android:id="@+id/imgNews" 
+    			android:src="@drawable/ic_news_off"
+    			android:onClick="onClickShowNews"/>
     		<ImageView android:background="@null" 
     			android:layout_weight=".2"
     			android:layout_height="wrap_content" 
     			android:layout_width="wrap_content"
     			android:id="@+id/imgInfo" 
-    			android:src="@drawable/ic_info_off"/>
+    			android:src="@drawable/ic_info_off"
+    			android:onClick="onClickShowInfo"/>
     		<ImageView android:background="@null" 
     			android:layout_weight=".2"
     			android:layout_height="wrap_content" 
     			android:layout_width="wrap_content"
     			android:id="@+id/imgEvents" 
-    			android:src="@drawable/ic_events_off"/>
+    			android:src="@drawable/ic_events_off"
+    			android:onClick="onClickShowEvents"/>
     		<ImageView android:background="@null" 
     			android:layout_weight=".2"
     			android:layout_height="wrap_content" 
     			android:layout_width="wrap_content"
     			android:id="@+id/imgLeague" 
-    			android:src="@drawable/ic_league_off"/>
+    			android:src="@drawable/ic_league_off"
+    			android:onClick="onClickShowLeague"/>
     	</LinearLayout>
     </LinearLayout>
 </RelativeLayout>
