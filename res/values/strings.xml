@@ -13,4 +13,9 @@
     <color name="tv_normal">#ffffffff</color>
     <string name="store_address_lattitude">37.639899</string>
     <string name="store_address_longitude">-122.492449</string>
+    
+    <string-array name="league_weeks">
+    	<item>Session</item>
+    	<item>Lifetime</item>
+    </string-array>
 </resources>

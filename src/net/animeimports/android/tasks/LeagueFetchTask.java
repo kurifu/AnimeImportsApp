@@ -62,7 +62,6 @@ public class LeagueFetchTask extends AsyncTask<ArrayList<LeaguePlayer>, Void, Ar
     			success = false;
     		} 
         	catch (UnknownHostException e) {
-        		//runOnUiThread(recoverThread);
         		if(listener != null)
         			listener.recover();
         		//e.printStackTrace();

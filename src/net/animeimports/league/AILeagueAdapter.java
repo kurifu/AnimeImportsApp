@@ -15,7 +15,10 @@ import android.widget.TextView;
 public class AILeagueAdapter extends ArrayAdapter<LeaguePlayer> {
 	private ArrayList<LeaguePlayer> items;
 	private Context mContext = null;
-
+	private int statMode = 0;
+	private final int DATA_SESSION = 1;
+	private final int DATA_LIFETIME = 2;
+	
 	public ArrayList<LeaguePlayer> getItems() {
 		return items;
 	}
@@ -36,21 +39,35 @@ public class AILeagueAdapter extends ArrayAdapter<LeaguePlayer> {
 		}
 		LeaguePlayer p = items.get(position);
 		TextView tName = (TextView) v.findViewById(R.id.tvName);
-		TextView tSession = (TextView) v.findViewById(R.id.tvSession);
-		TextView tLifetime = (TextView) v.findViewById(R.id.tvLifetime);
+		TextView tData = (TextView) v.findViewById(R.id.tvData);
 		
 		if(p != null) {
 			if(tName != null) {
 				tName.setText(p.getPlayerName());
 			}
-			if(tSession != null) {
-				tSession.setText(Integer.toString(p.getPointsSession()));
-			}
-			if(tLifetime != null) {
-				tLifetime.setText(Integer.toString(p.getPointsLifetime()));
+			if(tData != null) {
+				if(statMode == DATA_SESSION) {
+					tData.setText(Integer.toString(p.getPointsSession()));
+				}
+				else if(statMode == DATA_LIFETIME) {
+					tData.setText(Integer.toString(p.getPointsLifetime()));
+				}
 			}
 		}
-		
 		return v;
+	}
+	
+	/**
+	 * @return the statMode
+	 */
+	public int getStatMode() {
+		return statMode;
+	}
+
+	/**
+	 * @param statMode the statMode to set
+	 */
+	public void setStatMode(int statMode) {
+		this.statMode = statMode;
 	}
 }
