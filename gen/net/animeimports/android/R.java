@@ -44,8 +44,9 @@ public final class R {
         public static final int icon_mtg2=0x7f02001a;
         public static final int icon_sealed=0x7f02001b;
         public static final int icon_standard=0x7f02001c;
-        public static final int logo2=0x7f02001d;
-        public static final int news1=0x7f02001e;
+        public static final int ladder_off=0x7f02001d;
+        public static final int logo2=0x7f02001e;
+        public static final int news1=0x7f02001f;
     }
     public static final class id {
         public static final int bottomtext=0x7f06000b;
