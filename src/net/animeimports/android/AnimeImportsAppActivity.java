@@ -42,8 +42,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
 
-import com.google.common.collect.Lists;
-
 /**
  * Main Activity for AI, performs the following functions: 1. Fetch news updates
  * via Twitter 2. Provides store info, such as street address, phone number,
@@ -195,7 +193,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	 */
 	private void handleEventClick(int position) {
 		currMenu = EVENT_DETAILS;
-		ArrayList<String> eventDetails = Lists.newArrayList();
+		ArrayList<String> eventDetails = new ArrayList<String>();
 		AIEventEntry event = aiEventAdapter.getItems().get(position);
 		eventDetails.add(event.getName());
 		eventDetails.add("Date: " + event.getDate() + ", " + event.getTime());
