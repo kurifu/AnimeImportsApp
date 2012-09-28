@@ -70,12 +70,14 @@ public class AnimeImportsAppActivity extends ListActivity {
 	protected static ArrayList<AIEventEntry> events = null;
 	private static ArrayList<LeaguePlayer> leagueStats = null;
 	private static ArrayList<AINewsItem> updates = null;
-
+	
+	
 	ImageView imgInfo = null;
 	ImageView imgLeague = null;
 	ImageView imgEvents = null;
 	ImageView imgNews = null;
 	LinearLayout leagueHeader = null;
+	LinearLayout calendarHeader = null;
 	TextView tvNameHeader = null;
 	Spinner spinnerOptions = null;
 	protected DataManager dm = null;
@@ -104,7 +106,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		imgNews = (ImageView) findViewById(R.id.imgNews);
 		leagueHeader = (LinearLayout) findViewById(R.id.llLeagueHead);
 		tvNameHeader = (TextView) findViewById(R.id.tvNameHeader);
-		spinnerOptions = (Spinner) findViewById(R.id.spinnerOptions1);
+		spinnerOptions = (Spinner) findViewById(R.id.spinnerLeague);
 		spinnerOptions.setOnItemSelectedListener(new AILeagueSpinner(this));
 		etListener = new EventTaskListener();
 		ltListener = new LeagueTaskListener();
@@ -128,6 +130,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		currMenu = EVENTS;
 		swapIcons();
 		getEvents();
+		//loadEvents();
 	}
 
 	public void onClickShowInfo(View v) {
@@ -149,7 +152,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private void toggleLeagueHeader() {
 		if (currMenu == LEAGUE_LIFETIME) {
 			leagueHeader.setVisibility(View.VISIBLE);
-			ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.league_weeks,android.R.layout.simple_spinner_item);
+			ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.league_weeks, android.R.layout.simple_spinner_item);
 			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 			spinnerOptions.setAdapter(adapter);
 		} 
@@ -411,9 +414,12 @@ public class AnimeImportsAppActivity extends ListActivity {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void getEvents() {
+	public void getEvents() {
 		if (dm.okToFetchEvents()) {
-			EventFetchTask task = new EventFetchTask(etListener, mContext);
+			/*if(spinnerWeeks == null) {
+				spinnerWeeks = (Spinner) findViewById(R.id.spinnerWeeks);
+			}*/
+			EventFetchTask task = new EventFetchTask(etListener, mContext);//, spinnerWeeks.getSelectedItemPosition());
 			task.execute(events);
 		} 
 		else if (events == null || events.size() == 0) {
@@ -421,13 +427,12 @@ public class AnimeImportsAppActivity extends ListActivity {
 			task.execute(events);
 		} 
 		else {
-			loadEvents();
+			loadEvents();	
 		}
 	}
 
 	protected void loadEvents() {
-		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this,
-				R.layout.row_event, events);
+		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
 		setListAdapter(aiEventAdapter);
 		aiEventAdapter.notifyDataSetChanged();
 		if (mProgressDialog != null)
@@ -453,8 +458,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	// TODO: Refactor all 3 Listeners into a single class
 	public class LeagueTaskListener {
 		public void init() {
-			mProgressDialog = ProgressDialog.show(mContext, "Please wait...",
-					"Retrieving league statistics...");
+			mProgressDialog = ProgressDialog.show(mContext, "Please wait...", "Retrieving league statistics...");
 		}
 
 		public void onDbComplete(ArrayList<LeaguePlayer> stats) {
@@ -485,8 +489,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 
 	public class EventTaskListener {
 		public void init() {
-			mProgressDialog = ProgressDialog.show(mContext, "Please wait...",
-					"Retrieving upcoming events...");
+			mProgressDialog = ProgressDialog.show(mContext, "Please wait...", "Retrieving upcoming events...");
 		}
 
 		public void onDbComplete(ArrayList<AIEventEntry> result) {
@@ -550,7 +553,6 @@ public class AnimeImportsAppActivity extends ListActivity {
 	}
 	
 	public class AILeagueSpinner extends Spinner implements OnItemSelectedListener{
-		
 		public AILeagueSpinner(Context context) {
 			super(context);
 		}

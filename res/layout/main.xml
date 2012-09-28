@@ -13,33 +13,50 @@
     	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     		android:id="@+id/llLeagueHead"
 	    	android:layout_width="fill_parent"
-	    	android:layout_height="40dip" 
+	    	android:layout_height="wrap_content" 
 	    	android:paddingTop="2dip"
 	    	android:paddingBottom="2dip"
 	    	android:orientation="horizontal"
 	    	android:layout_gravity="center">
-	    <TextView android:id="@+id/tvNameHeader"
-	    	android:text="@string/league_name"
-	    	android:layout_width="wrap_content"
-	    	android:layout_height="wrap_content"
-	    	android:layout_weight=".5"
-	    	android:gravity="left"
-	    	android:paddingLeft="10dip"
-	    	android:paddingTop="5dip"
-	    	android:textAppearance="?android:attr/textAppearanceMedium"
-	    	android:clickable="true"/>
-	    <Spinner android:id="@+id/spinnerOptions1"
-   			android:layout_height="wrap_content" 
-   			android:layout_width="50dip"
-   			android:layout_weight=".5"
-   			android:gravity="center"
-   			android:layout_gravity="center_vertical"/>
+		    <TextView android:id="@+id/tvNameHeader"
+		    	android:text="@string/league_name"
+		    	android:layout_width="wrap_content"
+		    	android:layout_height="wrap_content"
+		    	android:layout_weight=".5"
+		    	android:gravity="left"
+		    	android:paddingLeft="10dip"
+		    	android:paddingTop="5dip"
+		    	android:textAppearance="?android:attr/textAppearanceMedium"
+		    	android:clickable="true"/>
+		    <Spinner android:id="@+id/spinnerLeague"
+	   			android:layout_height="wrap_content" 
+	   			android:layout_width="50dip"
+	   			android:layout_weight=".5"
+	   			android:gravity="center"
+	   			android:layout_gravity="center_vertical"/>
     	</LinearLayout>
     	
-    	<View android:layout_height="2dip"
-    		android:layout_width="fill_parent"
-	    	android:background="#FF909090"/>
-    	
+    	<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
+    	    android:id="@+id/llCalendarHead"
+    	    android:layout_width="fill_parent"
+    	    android:layout_height="60dip"
+    	    android:orientation="vertical"
+    	    android:layout_gravity="center">
+    	    <TextView android:id="@+id/tvCalendarHeader"
+		        android:text="Show me events up until:"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_gravity="center"/>
+	    	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		    	android:layout_width="fill_parent"
+		    	android:layout_height="40dip" 
+		    	android:paddingTop="2dip"
+		    	android:paddingBottom="2dip"
+		    	android:orientation="horizontal"
+		    	android:layout_gravity="center">
+	    	</LinearLayout>
+    	</LinearLayout>-->
+	    	
         <ListView android:drawSelectorOnTop="false" 
         	android:layout_width="fill_parent" 
         	android:layout_height="0dip" 

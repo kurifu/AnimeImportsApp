@@ -14,7 +14,7 @@ public class CustomCalendarURL extends GoogleUrl {
 	public DateTime startMax;
 	
 	@Key("order-by")
-	public String orderBy = "startTime";
+	public String orderBy = "endTime";
 	
 	public CustomCalendarURL(String encodeUrl) {
 		super(encodeUrl);

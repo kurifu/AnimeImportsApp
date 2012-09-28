@@ -18,4 +18,17 @@
     	<item>Session</item>
     	<item>Lifetime</item>
     </string-array>
+    
+    <string-array name="calendar_upcoming">
+    	<item>1 week</item>
+    	<item>2 weeks</item>
+    	<item>3 weeks</item>
+    	<item>4 weeks</item>
+    	<item>5 weeks</item>
+    	<item>6 weeks</item>
+    	<item>7 weeks</item>
+    	<item>8 weeks</item>
+    	<item>9 weeks</item>
+    	<item>10 weeks</item>
+    </string-array>
 </resources>

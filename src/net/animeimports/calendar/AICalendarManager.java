@@ -27,7 +27,7 @@ public class AICalendarManager {
 	Context mContext = null;
 	private static AICalendarManager manager = null;
 	private static CalendarAndroidRequestInitializer calReqInitializer = null;
-	private static final int DAYS_IN_FUTURE = 14;
+	private static final int DAYS_IN_FUTURE = 30;
 	
 	private AICalendarManager(Context context) {
 		mContext = context;
@@ -94,12 +94,32 @@ public class AICalendarManager {
     public Date getEndDate() {
     	Calendar now = Calendar.getInstance();
 		Date endDate = new Date();
+		int thisMonth = now.get(Calendar.MONTH);
+    	int thisDay = now.get(Calendar.DAY_OF_MONTH);
+		
 		endDate.setYear(now.get(Calendar.YEAR)-1900);
 		endDate.setMonth(now.get(Calendar.MONTH));
 		endDate.setDate(now.get(Calendar.DATE) + DAYS_IN_FUTURE);
 		endDate.setHours(now.get(Calendar.HOUR));
 		endDate.setMinutes(now.get(Calendar.MINUTE));
 		endDate.setSeconds(now.get(Calendar.SECOND));
+	
+		/*
+    	// If target date is after today
+    	if(mMonth > thisMonth || (mMonth == thisMonth && mDay >= thisDay)) {
+    		endDate.setYear(now.get(Calendar.YEAR)-1900);
+    	}
+    	// Otherwise increment year by 1
+    	else {
+    		endDate.setYear(now.get(Calendar.YEAR)-1901);
+    	}
+    	
+    	endDate.setMonth(mMonth);
+		endDate.setDate(mDay);
+		endDate.setHours(now.get(Calendar.HOUR));
+		endDate.setMinutes(now.get(Calendar.MINUTE));
+		endDate.setSeconds(now.get(Calendar.SECOND));
+    	*/
 		return endDate;
     }
  	
