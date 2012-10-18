@@ -2,7 +2,9 @@ package net.animeimports.android;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+
+import twitter4j.Twitter;
+import twitter4j.conf.ConfigurationBuilder;
 
 import net.animeimports.android.tasks.EventFetchDbTask;
 import net.animeimports.android.tasks.EventFetchTask;
@@ -55,7 +57,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
 public class AnimeImportsAppActivity extends ListActivity {
 
 	// Events / Lists
-	private List<String> storeInfo = null;
+	private ArrayList<String> storeInfo = null;
 	private AIEventAdapter aiEventAdapter;
 	private AINewsAdapter aiNewsAdapter;
 
@@ -71,6 +73,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 	private static ArrayList<LeaguePlayer> leagueStats = null;
 	private static ArrayList<AINewsItem> updates = null;
 
+	ImageView imgLogo = null;
 	ImageView imgInfo = null;
 	ImageView imgLeague = null;
 	ImageView imgEvents = null;
@@ -102,9 +105,10 @@ public class AnimeImportsAppActivity extends ListActivity {
 		imgLeague = (ImageView) findViewById(R.id.imgLeague);
 		imgEvents = (ImageView) findViewById(R.id.imgEvents);
 		imgNews = (ImageView) findViewById(R.id.imgNews);
+		imgLogo = (ImageView) findViewById(R.id.logoMain);
 		leagueHeader = (LinearLayout) findViewById(R.id.llLeagueHead);
 		tvNameHeader = (TextView) findViewById(R.id.tvNameHeader);
-		spinnerOptions = (Spinner) findViewById(R.id.spinnerOptions1);
+		spinnerOptions = (Spinner) findViewById(R.id.spinnerLeague);
 		spinnerOptions.setOnItemSelectedListener(new AILeagueSpinner(this));
 		etListener = new EventTaskListener();
 		ltListener = new LeagueTaskListener();
@@ -114,6 +118,8 @@ public class AnimeImportsAppActivity extends ListActivity {
 		storeInfo.add(this.getString(R.string.store_number));
 		storeInfo.add(this.getString(R.string.store_email));
 		storeInfo.add(this.getString(R.string.store_hours));
+		storeInfo.add(this.getString(R.string.twitter_follow));
+		
 		onClickShowNews(null);
 	}
 
@@ -121,7 +127,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		currMenu = NEWS;
 		swapIcons();
 		getNews();
-		toggleLeagueHeader();
+		toggleHeader();
 	}
 
 	public void onClickShowEvents(View v) {
@@ -134,7 +140,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		currMenu = INFO;
 		swapIcons();
 		loadStoreInfo();
-		toggleLeagueHeader();
+		toggleHeader();
 	}
 
 	public void onClickShowLeague(View v) {
@@ -146,14 +152,20 @@ public class AnimeImportsAppActivity extends ListActivity {
 	/**
 	 * Toggle the Name/Session/League header bar displayed on the League screen
 	 */
-	private void toggleLeagueHeader() {
-		if (currMenu == LEAGUE_LIFETIME) {
+	private void toggleHeader() {
+		if (currMenu == INFO) {
+			imgLogo.setVisibility(View.VISIBLE);
+			leagueHeader.setVisibility(View.GONE);
+		}
+		else if (currMenu == LEAGUE_LIFETIME) {
+			imgLogo.setVisibility(View.GONE);
 			leagueHeader.setVisibility(View.VISIBLE);
 			ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.league_weeks,android.R.layout.simple_spinner_item);
 			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 			spinnerOptions.setAdapter(adapter);
 		} 
 		else {
+			imgLogo.setVisibility(View.GONE);
 			leagueHeader.setVisibility(View.GONE);
 		}
 	}
@@ -248,87 +260,80 @@ public class AnimeImportsAppActivity extends ListActivity {
 		Builder builder = new AlertDialog.Builder(mContext);
 		switch (position) {
 		case 0:
-			builder.setMessage("Show store location in Maps?")
-					.setCancelable(false)
-					.setPositiveButton("Yes",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									Uri uri = Uri.parse("geo:"
-											+ mContext
-													.getString(R.string.store_address_lattitude)
-											+ ","
-											+ mContext
-													.getString(R.string.store_address_longitude));
-									Intent mapIntent = new Intent(
-											Intent.ACTION_VIEW, uri);
-									startActivity(mapIntent);
-								}
-							})
-					.setNegativeButton("No",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									dialog.cancel();
-								}
-							}).show();
+			builder.setMessage("Show store location in Maps?").setCancelable(false).setPositiveButton("Yes",
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						Uri uri = Uri.parse("geo:" + mContext.getString(R.string.store_address_lattitude) + "," + mContext.getString(R.string.store_address_longitude));
+						Intent mapIntent = new Intent(Intent.ACTION_VIEW, uri);
+						startActivity(mapIntent);
+					}
+				})
+				.setNegativeButton("No",
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) { 
+							dialog.cancel(); 
+						} 
+					}).show();
 			break;
 		case 1:
-			builder.setMessage("Call store?")
-					.setCancelable(false)
-					.setPositiveButton("Yes",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									Intent phoneIntent = new Intent(
-											Intent.ACTION_CALL);
-									phoneIntent.setData(Uri.parse("tel:"
-											+ mContext
-													.getString(R.string.store_number)));
-									startActivity(phoneIntent);
-								}
-							})
-					.setNegativeButton("No",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									dialog.cancel();
-								}
-							}).show();
+			builder.setMessage("Call store?").setCancelable(false).setPositiveButton("Yes",
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+						phoneIntent.setData(Uri.parse("tel:" + mContext.getString(R.string.store_number)));
+						startActivity(phoneIntent);
+					}
+				})
+				.setNegativeButton("No",
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					}).show();
 			break;
 		case 2:
-			builder.setMessage("Email store?")
-					.setCancelable(false)
-					.setPositiveButton("Yes",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									Intent emailIntent = new Intent(
-											Intent.ACTION_SEND);
-									emailIntent.setType("plain/text");
-									startActivity(Intent.createChooser(
-											emailIntent, "Send email with:"));
-								}
-							})
-					.setNegativeButton("No",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									dialog.cancel();
-								}
-							}).show();
+			builder.setMessage("Email store?").setCancelable(false).setPositiveButton("Yes",
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog,int which) {
+						Intent emailIntent = new Intent(Intent.ACTION_SEND);
+						emailIntent.setType("plain/text");
+						startActivity(Intent.createChooser(emailIntent, "Send email with:"));
+					}
+				})
+				.setNegativeButton("No",
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					}).show();
+			break;
+		case 4:
+			builder.setMessage("Follow on Twitter?").setCancelable(false).setPositiveButton("Yes",
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						//followTwitter();
+					}
+				})
+				.setNegativeButton("No", 
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					}).show();
 			break;
 		default:
 			break;
 		}
 	}
-
+	
 	/**
 	 * Handles all clicks for any menu by looking at the currMenu member
 	 */
@@ -351,10 +356,15 @@ public class AnimeImportsAppActivity extends ListActivity {
 	}
 
 	private void loadStoreInfo() {
-		ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
-		setListAdapter(storeInfoAdapter);
-		storeInfoAdapter.notifyDataSetChanged();
-		toggleLeagueHeader();
+		//ArrayAdapter<String> storeInfoAdapter = new ArrayAdapter<String>(this, R.layout.row_event_details, storeInfo);
+		//setListAdapter(storeInfoAdapter);
+		//storeInfoAdapter.notifyDataSetChanged();
+		
+		AIInfoAdapter adapter = new AIInfoAdapter(AnimeImportsAppActivity.this, R.layout.row_info, storeInfo);
+		setListAdapter(adapter);
+		adapter.notifyDataSetChanged();
+		
+		toggleHeader();
 	}
 
 	private void getNews() {
@@ -373,7 +383,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 		aiNewsAdapter.notifyDataSetChanged();
 		if (mProgressDialog != null)
 			mProgressDialog.dismiss();
-		toggleLeagueHeader();
+		toggleHeader();
 	}
 
 	/**
@@ -403,7 +413,7 @@ public class AnimeImportsAppActivity extends ListActivity {
 			adapter.notifyDataSetChanged();
 			if (mProgressDialog != null)
 				mProgressDialog.dismiss();
-			toggleLeagueHeader();
+			toggleHeader();
 		} 
 		catch (NullPointerException e) {
 			runOnUiThread(recoverThread);
@@ -426,13 +436,12 @@ public class AnimeImportsAppActivity extends ListActivity {
 	}
 
 	protected void loadEvents() {
-		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this,
-				R.layout.row_event, events);
+		aiEventAdapter = new AIEventAdapter(AnimeImportsAppActivity.this, R.layout.row_event, events);
 		setListAdapter(aiEventAdapter);
 		aiEventAdapter.notifyDataSetChanged();
 		if (mProgressDialog != null)
 			mProgressDialog.dismiss();
-		toggleLeagueHeader();
+		toggleHeader();
 	}
 
 	/**

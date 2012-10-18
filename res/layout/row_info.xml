@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:id="@+id/llRowEvent"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="?android:attr/listPreferredItemHeight">
+  <ImageView android:id="@+id/iconInfo"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:gravity="center_vertical"
+	android:layout_marginRight="6dip"
+	android:src="@drawable/icon"/>
+  	<TextView android:id="@+id/textInfo"
+		android:layout_width="0dip"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceLarge" 
+		android:layout_weight="1"
+		android:gravity="center_vertical"
+		android:singleLine="false"/>	
+</LinearLayout>

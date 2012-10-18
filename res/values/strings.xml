@@ -18,4 +18,6 @@
     	<item>Session</item>
     	<item>Lifetime</item>
     </string-array>
+    <string name="twitter_follow">Follow us on Twitter</string>
+    <string name="facebook_add">Like us on Facebook</string>
 </resources>
