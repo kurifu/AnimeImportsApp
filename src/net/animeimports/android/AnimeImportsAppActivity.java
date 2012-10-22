@@ -3,9 +3,6 @@ package net.animeimports.android;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import twitter4j.Twitter;
-import twitter4j.conf.ConfigurationBuilder;
-
 import net.animeimports.android.tasks.EventFetchDbTask;
 import net.animeimports.android.tasks.EventFetchTask;
 import net.animeimports.android.tasks.LeagueFetchDbTask;
@@ -114,12 +111,13 @@ public class AnimeImportsAppActivity extends ListActivity {
 		ltListener = new LeagueTaskListener();
 		ntListener = new NewsTaskListener();
 		storeInfo = new ArrayList<String>();
+		
 		storeInfo.add(this.getString(R.string.store_address));
 		storeInfo.add(this.getString(R.string.store_number));
 		storeInfo.add(this.getString(R.string.store_email));
-		storeInfo.add(this.getString(R.string.store_hours));
 		storeInfo.add(this.getString(R.string.twitter_follow));
-		
+		storeInfo.add(this.getString(R.string.facebook_like));
+		storeInfo.add(this.getString(R.string.store_hours));
 		onClickShowNews(null);
 	}
 
@@ -313,8 +311,24 @@ public class AnimeImportsAppActivity extends ListActivity {
 						}
 					}).show();
 			break;
-		case 4:
+		case 3:
 			builder.setMessage("Follow on Twitter?").setCancelable(false).setPositiveButton("Yes",
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						//followTwitter();
+					}
+				})
+				.setNegativeButton("No", 
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					}).show();
+			break;
+		case 4:
+			builder.setMessage("Like on Facebook?").setCancelable(false).setPositiveButton("Yes",
 				new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {

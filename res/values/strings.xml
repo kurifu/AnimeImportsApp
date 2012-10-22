@@ -19,5 +19,5 @@
     	<item>Lifetime</item>
     </string-array>
     <string name="twitter_follow">Follow us on Twitter</string>
-    <string name="facebook_add">Like us on Facebook</string>
+    <string name="facebook_like">Like us on Facebook</string>
 </resources>

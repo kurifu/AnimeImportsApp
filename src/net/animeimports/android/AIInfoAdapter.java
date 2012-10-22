@@ -78,6 +78,7 @@ public class AIInfoAdapter extends ArrayAdapter<String> {
 	private int getIcon(int input) {
 		int retVal = R.drawable.icon_map;
 		switch(input) {
+		
 		case 0:
 			retVal = R.drawable.icon_map;
 			break;
@@ -86,6 +87,15 @@ public class AIInfoAdapter extends ArrayAdapter<String> {
 			break;
 		case 2:
 			retVal = R.drawable.icon_email;
+			break;
+		case 3:
+			retVal = R.drawable.icon_twitter;
+			break;
+		case 4:
+			retVal = R.drawable.icon_facebook;
+			break;
+		case 5:
+			retVal = R.drawable.icon_time;
 			break;
 		}
 		return retVal;
