@@ -232,120 +232,106 @@ public class AnimeImportsAppActivity extends ListActivity {
 		if (end == -1)
 			end = item.length();
 		final String url = item.substring(start, end);
-
+		
+		DialogInterface.OnClickListener diYesClick = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				Intent i = new Intent(Intent.ACTION_VIEW);
+				i.setData(Uri.parse(url));
+				startActivity(i);
+			}
+		};
+		DialogInterface.OnClickListener diNoClick = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.cancel();
+			}
+		};
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage("Open link in browser?")
-				.setCancelable(false)
-				.setPositiveButton("Yes",
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-									int which) {
-								Intent i = new Intent(Intent.ACTION_VIEW);
-								i.setData(Uri.parse(url));
-								startActivity(i);
-							}
-						})
-				.setNegativeButton("No", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				}).show();
+		builder.setMessage("Open link in browser?");
+		builder.setCancelable(false);
+		builder.setPositiveButton("Yes", diYesClick);
+		builder.setNegativeButton("No", diNoClick);
+		builder.show();
 	}
 
 	private void handleInfoClick(int position) {
 		Builder builder = new AlertDialog.Builder(mContext);
+		builder.setCancelable(false);
+		
+		DialogInterface.OnClickListener diYesClick = null;
+		DialogInterface.OnClickListener diNoClick = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.cancel(); 
+			}
+		};
+		
 		switch (position) {
 		case 0:
-			builder.setMessage("Show store location in Maps?").setCancelable(false).setPositiveButton("Yes",
-				new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						Uri uri = Uri.parse("geo:" + mContext.getString(R.string.store_address_lattitude) + "," + mContext.getString(R.string.store_address_longitude));
-						Intent mapIntent = new Intent(Intent.ACTION_VIEW, uri);
-						startActivity(mapIntent);
-					}
-				})
-				.setNegativeButton("No",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) { 
-							dialog.cancel(); 
-						} 
-					}).show();
+			diYesClick = new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					Uri uri = Uri.parse("geo:" + mContext.getString(R.string.store_address_lattitude) + "," + mContext.getString(R.string.store_address_longitude));
+					Intent mapIntent = new Intent(Intent.ACTION_VIEW, uri);
+					startActivity(mapIntent);
+				}
+			};
+			
+			builder.setMessage("Show store location in Maps?");
+			
 			break;
 		case 1:
-			builder.setMessage("Call store?").setCancelable(false).setPositiveButton("Yes",
-				new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						Intent phoneIntent = new Intent(Intent.ACTION_CALL);
-						phoneIntent.setData(Uri.parse("tel:" + mContext.getString(R.string.store_number)));
-						startActivity(phoneIntent);
-					}
-				})
-				.setNegativeButton("No",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.cancel();
-						}
-					}).show();
+			diYesClick = new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+					phoneIntent.setData(Uri.parse("tel:" + mContext.getString(R.string.store_number)));
+					startActivity(phoneIntent);
+				}
+			};
+
+			builder.setMessage("Call store?");
 			break;
 		case 2:
-			builder.setMessage("Email store?").setCancelable(false).setPositiveButton("Yes",
-				new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog,int which) {
-						Intent emailIntent = new Intent(Intent.ACTION_SEND);
-						emailIntent.setType("plain/text");
-						startActivity(Intent.createChooser(emailIntent, "Send email with:"));
-					}
-				})
-				.setNegativeButton("No",
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.cancel();
-						}
-					}).show();
+			diYesClick = new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog,int which) {
+					Intent emailIntent = new Intent(Intent.ACTION_SEND);
+					emailIntent.setType("plain/text");
+					startActivity(Intent.createChooser(emailIntent, "Send email with:"));
+				}
+			};
+			
+			builder.setMessage("Email store?");
 			break;
 		case 3:
-			builder.setMessage("Follow on Twitter?").setCancelable(false).setPositiveButton("Yes",
-				new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						//followTwitter();
-					}
-				})
-				.setNegativeButton("No", 
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.cancel();
-						}
-					}).show();
+			diYesClick = new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					//followTwitter();
+				}
+			};
+			
+			builder.setMessage("Follow on Twitter?");
 			break;
 		case 4:
-			builder.setMessage("Like on Facebook?").setCancelable(false).setPositiveButton("Yes",
-				new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						//followTwitter();
-					}
-				})
-				.setNegativeButton("No", 
-					new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.cancel();
-						}
-					}).show();
+			diYesClick = new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					//followTwitter();
+				}
+			};
+			
+			builder.setMessage("Like on Facebook?");
 			break;
 		default:
 			break;
 		}
+		
+		builder.setPositiveButton("Yes", diYesClick);
+		builder.setNegativeButton("No", diNoClick);
+		builder.show();
 	}
 	
 	/**
